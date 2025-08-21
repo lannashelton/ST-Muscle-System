@@ -1,1 +1,136 @@
+/* Bodybuilding Panel Styles */
+#bodybuilding-panel {
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    width: 320px;
+    background: var(--SmartThemeBlurTintColor);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength));
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    padding: 15px;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
+}
 
+.bodybuilding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.bodybuilding-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bodybuilding-action {
+    cursor: pointer;
+    font-size: 1.2em;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.bodybuilding-action:hover {
+    opacity: 1;
+}
+
+.activity-selector {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+}
+
+.activity-btn {
+    padding: 8px 12px;
+    background: var(--SmartThemeQuoteColor);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.activity-btn.active {
+    background: var(--SmartThemeActiveSwitchColor);
+    color: var(--SmartThemeButtonTextColor);
+}
+
+.stamina-display, .muscle-display, .stamina-level-display {
+    margin: 10px 0;
+}
+
+.bar-container {
+    position: relative;
+    height: 20px;
+    background: var(--black30a);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.stamina-bar {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.5s;
+}
+
+.exp-bar {
+    height: 100%;
+    background: #2196f3;
+    transition: width 0.5s;
+}
+
+.bar-text {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    color: var(--SmartThemeBodyColor);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.stat-card {
+    background: var(--SmartThemeBlurTintColor);
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.intensity-control {
+    margin: 15px 0;
+}
+
+.intensity-slider {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.injury-warning {
+    color: #ff6b6b;
+    margin-top: 10px;
+    font-size: 0.85em;
+}
