@@ -169,3 +169,25 @@
 #bodybuilding-panel .progress-bar {
     background: rgba(255,255,255,0.1) !important;
 }
+
+#bodybuilding-panel {
+    z-index: 1000 !important;
+    font-family: inherit;
+}
+
+/* Fallback variables in case JS doesn't set them */
+:root {
+    --BodybuildingPanelBg: rgba(30, 31, 40, 0.95);
+    --BodybuildingBorder: #404254;
+    --BodybuildingText: #ece9f0;
+    --StatBg: #2a2b36;
+    --BarBg: rgba(255,255,255,0.1);
+    --ActivityBtnBg: rgba(100, 102, 128, 0.5);
+    --ActivityActiveBg: #25b87a;
+    --ActivityActiveText: white;
+}
+
+/* Force panel background for compatibility */
+#bodybuilding-panel, #bodybuilding-panel * {
+    box-sizing: border-box;
+}
