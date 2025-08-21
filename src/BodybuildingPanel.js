@@ -5,6 +5,7 @@ export class BodybuildingPanel {
         this.manager = manager;
         this.isVisible = false;
         this.domElement = null;
+        this.weightModal = null;
     }
     
     createPanel() {
@@ -14,7 +15,7 @@ export class BodybuildingPanel {
 
         const characterName = this.manager.character?.name || 'No Character';
         const progress = this.manager.getProgress();
-        const liftRecord = this.manager.state.maxLiftToday?.toFixed(1) || 'None';
+        const maxLift = progress.maxLift;
         
         panel.innerHTML = `
             <div class="bodybuilding-header">
@@ -50,16 +51,19 @@ export class BodybuildingPanel {
                         <div class="stat-value">${this.manager.state.muscleLevel}</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-label">Current Weight</div>
+                        <div class="stat-value">
+                            ${this.manager.state.workoutWeight}kg
+                            <button id="change-weight" class="action-icon">✏️</button>
+                        </div>
+                    </div>
+                    <div class="stat-card">
                         <div class="stat-label">Max Lift</div>
-                        <div class="stat-value">${progress.maxLift}kg</div>
+                        <div class="stat-value">${maxLift}kg</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Stamina Level</div>
                         <div class="stat-value">${this.manager.state.staminaLevel}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Today's Record</div>
-                        <div class="stat-value">${liftRecord}kg</div>
                     </div>
                 </div>
                 
@@ -81,25 +85,14 @@ export class BodybuildingPanel {
                     </div>
                 </div>
                 
-                ${this.manager.state.activity === 'training' ? `
-                <div class="intensity-control">
-                    <label>
-                        Training Intensity: 
-                        <span id="intensity-value">${this.manager.state.trainingIntensity}</span>%
-                    </label>
-                    <input type="range" min="10" max="100" value="${this.manager.state.trainingIntensity}" 
-                           class="intensity-slider" id="training-intensity">
-                </div>
-                ${this.manager.state.trainingIntensity > 90 ? `
-                <div class="injury-warning">
-                    ⚠ High intensity increases injury risk!
-                </div>
-                ` : ''}
-                ` : ''}
-                
                 ${this.manager.state.injured ? `
                 <div class="injury-warning">
                     ⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.
+                </div>
+                ` : 
+                this.manager.state.workoutWeight > maxLift * 0.9 ? `
+                <div class="injury-warning">
+                    ⚠ Lifting ${this.manager.state.workoutWeight}kg (${Math.round(this.manager.state.workoutWeight/maxLift*100)}% max) increases injury risk!
                 </div>
                 ` : ''}
                 ` : '<div>No character selected</div>'}
@@ -109,81 +102,113 @@ export class BodybuildingPanel {
         document.body.appendChild(panel);
         return panel;
     }
+
+    createWeightModal() {
+        const modal = document.createElement('div');
+        modal.className = 'weight-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--SmartThemeBodyBgColor);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+        `;
+
+        const maxLift = this.manager.getMaxLift();
+        modal.innerHTML = `
+            <h4>Set Workout Weight</h4>
+            <p>Max Lift: ${maxLift}kg</p>
+            
+            <div class="flex-container">
+                <input type="number" 
+                       id="weight-input" 
+                       min="0" 
+                       max="${maxLift}" 
+                       step="0.5" 
+                       value="${this.manager.state.workoutWeight || 10}">
+                <label for="weight-input">kg</label>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="confirm-weight">Set</button>
+                <button id="cancel-weight">Cancel</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    showWeightModal() {
+        if (!this.weightModal) {
+            this.weightModal = this.createWeightModal();
+            this.setupModalEvents();
+        }
+        
+        const weightInput = this.weightModal.querySelector('#weight-input');
+        weightInput.max = this.manager.getMaxLift();
+        weightInput.value = this.manager.state.workoutWeight;
+        
+        this.weightModal.style.display = 'block';
+    }
+
+    setupModalEvents() {
+        const modal = this.weightModal;
+        const confirmBtn = modal.querySelector('#confirm-weight');
+        const cancelBtn = modal.querySelector('#cancel-weight');
+        const weightInput = modal.querySelector('#weight-input');
+
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            const weight = parseFloat(weightInput.value);
+            if (!isNaN(weight)) {
+                const result = this.manager.setWorkoutWeight(weight);
+                toastr.success(result, "Weight Updated");
+                modal.style.display = 'none';
+                this.update();
+            }
+        });
+    }
     
     update() {
         if (!this.domElement) return;
         
         const progress = this.manager.getProgress();
         
-        // Stamina bar
-        const staminaBar = this.domElement.querySelector('.stamina-bar');
-        const staminaText = this.domElement.querySelector('.bar-text');
-        if (staminaBar && staminaText) {
-            staminaBar.style.width = `${progress.staminaPercent}%`;
-            staminaText.textContent = 
-                `Stamina: ${this.manager.state.currentStamina.toFixed(1)}/${progress.maxStamina}`;
+        // Update weight display
+        const weightDisplay = this.domElement.querySelector('.stat-card:nth-child(2) .stat-value');
+        if (weightDisplay) {
+            weightDisplay.innerHTML = `
+                ${this.manager.state.workoutWeight}kg
+                <button id="change-weight" class="action-icon">✏️</button>
+            `;
         }
-        
-        // Muscle exp bar
-        const muscleBar = this.domElement.querySelector('.muscle-display .exp-bar');
-        const muscleText = this.domElement.querySelector('.muscle-display .bar-text');
-        if (muscleBar && muscleText) {
-            muscleBar.style.width = `${progress.muscleExpPercent}%`;
-            muscleText.textContent = 
-                `Muscle EXP: ${this.manager.state.muscleExp.toFixed(1)}/${progress.nextMuscleLevelExp}`;
-        }
-        
-        // Stamina exp bar
-        const staminaExpBar = this.domElement.querySelector('.stamina-level-display .exp-bar');
-        const staminaExpText = this.domElement.querySelector('.stamina-level-display .bar-text');
-        if (staminaExpBar && staminaExpText) {
-            staminaExpBar.style.width = `${progress.staminaExpPercent}%`;
-            staminaExpText.textContent = 
-                `Stamina EXP: ${this.manager.state.staminaExp.toFixed(1)}/${progress.nextStaminaLevelExp}`;
-        }
-        
-        // Stats grid
-        const maxLiftEl = this.domElement.querySelector('.stat-card:nth-child(2) .stat-value');
-        if (maxLiftEl) {
-            maxLiftEl.textContent = `${progress.maxLift}kg`;
-        }
-        
-        const recordEl = this.domElement.querySelector('.stat-card:nth-child(4) .stat-value');
-        if (recordEl) {
-            recordEl.textContent = `${this.manager.state.maxLiftToday.toFixed(1)}kg`;
-        }
-        
-        // Intensity slider
-        const intensityValue = this.domElement.querySelector('#intensity-value');
-        if (intensityValue) {
-            intensityValue.textContent = this.manager.state.trainingIntensity;
-        }
-        const intensitySlider = this.domElement.querySelector('#training-intensity');
-        if (intensitySlider) {
-            intensitySlider.value = this.manager.state.trainingIntensity;
-        }
-        
-        // Activity buttons
-        const activityButtons = this.domElement.querySelectorAll('.activity-btn');
-        activityButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.activity === this.manager.state.activity);
-        });
         
         // Injury warning
-        const injuryWarning = this.domElement.querySelector('.injury-warning');
-        if (injuryWarning) {
-            injuryWarning.textContent = this.manager.state.injured ?
-                `⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.` :
-                '⚠ High intensity increases injury risk!';
+        const warning = this.domElement.querySelector('.injury-warning');
+        if (warning) {
+            if (this.manager.state.injured) {
+                warning.textContent = `⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.`;
+            } 
+            else if (this.manager.state.workoutWeight > progress.maxLift * 0.9) {
+                const ratio = Math.round(this.manager.state.workoutWeight / progress.maxLift * 100);
+                warning.textContent = `⚠ Lifting ${this.manager.state.workoutWeight}kg (${ratio}% max) increases injury risk!`;
+            }
         }
     }
     
     updateCharacter(name) {
         if (!this.domElement) return;
         const header = this.domElement.querySelector('.bodybuilding-header h3');
-        if (header) {
-            header.textContent = `Bodybuilding - ${name}`;
-        }
+        if (header) header.textContent = `Bodybuilding - ${name}`;
         this.update();
     }
     
@@ -243,6 +268,13 @@ export class BodybuildingPanel {
     }
     
     attachEventListeners() {
+        // Weight change button
+        this.domElement.addEventListener('click', (e) => {
+            if (e.target.id === 'change-weight') {
+                this.showWeightModal();
+            }
+        });
+        
         // Activity buttons
         this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -254,24 +286,10 @@ export class BodybuildingPanel {
             });
         });
         
-        // Intensity slider
-        const slider = this.domElement.querySelector('#training-intensity');
-        if (slider) {
-            slider.addEventListener('input', (e) => {
-                this.manager.state.trainingIntensity = e.target.value;
-                this.update();
-            });
-            
-            // Save after mouseup
-            slider.addEventListener('change', () => {
-                this.manager.saveState();
-            });
-        }
-        
         // Refresh button
         this.domElement.querySelector('#bb-refresh').addEventListener('click', () => {
             this.manager.loadState();
-            toastr.success("Muscle stats reloaded");
+            toastr.success("Bodybuilding stats reloaded");
             this.update();
         });
         
