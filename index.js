@@ -53,7 +53,7 @@ async function initializeExtension() {
 
             eventSource.on(event_types.MESSAGE_RECEIVED, () => {
                 const character = getCurrentCharacter();
-                if (!character || !manager.state.enabled) return;
+                if (!character || !manager.state.enabled || manager.state.activity === 'idle') return;
                 
                 const sysMessage = manager.processActivity();
                 if (sysMessage && extension_settings[MODULE_NAME]?.enableSysMessages) {
