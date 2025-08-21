@@ -9,38 +9,36 @@ export class BodybuildingPanel {
     }
     
     createPanel() {
+        if (this.domElement) {
+            this.domElement.remove();
+        }
+        
         const panel = document.createElement('div');
         panel.id = 'bodybuilding-panel';
         panel.className = 'bodybuilding-panel';
 
-        const characterName = this.manager.character?.name || 'No Character';
-        const progress = this.manager.getProgress();
-        const maxLift = progress.maxLift;
+        const characterName = 'Bodybuilding System';
         
         panel.innerHTML = `
             <div class="bodybuilding-header">
-                <h3>Bodybuilding - ${characterName}</h3>
+                <h3>${characterName}</h3>
                 <div class="bodybuilding-actions">
                     <span class="bodybuilding-action" id="bb-refresh">↻</span>
                     <span class="bodybuilding-action" id="bb-close">×</span>
                 </div>
             </div>
             <div class="bodybuilding-content">
-                ${this.manager.character ? `
                 <div class="activity-selector">
-                    ${this.manager.activities.map(a => `
-                        <button class="activity-btn ${this.manager.state.activity === a ? 'active' : ''}" 
-                                data-activity="${a}">
-                            ${a.charAt(0).toUpperCase() + a.slice(1)}
-                        </button>
-                    `).join('')}
+                    <button class="activity-btn" data-activity="resting">Resting</button>
+                    <button class="activity-btn" data-activity="cardio">Cardio</button>
+                    <button class="activity-btn" data-activity="training">Training</button>
                 </div>
                 
                 <div class="stamina-display">
                     <div class="bar-container">
-                        <div class="stamina-bar" style="width: ${progress.staminaPercent}%"></div>
+                        <div class="stamina-bar"></div>
                         <div class="bar-text">
-                            Stamina: ${this.manager.state.currentStamina.toFixed(1)}/${progress.maxStamina}
+                            Stamina: 0/kg
                         </div>
                     </div>
                 </div>
@@ -48,54 +46,46 @@ export class BodybuildingPanel {
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Muscle Level</div>
-                        <div class="stat-value">${this.manager.state.muscleLevel}</div>
+                        <div class="stat-value">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Current Weight</div>
                         <div class="stat-value">
-                            ${this.manager.state.workoutWeight}kg
+                            0kg
                             <button id="change-weight" class="action-icon">✏️</button>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Max Lift</div>
-                        <div class="stat-value">${maxLift}kg</div>
+                        <div class="stat-value">0kg</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Stamina Level</div>
-                        <div class="stat-value">${this.manager.state.staminaLevel}</div>
+                        <div class="stat-value">0</div>
                     </div>
                 </div>
                 
                 <div class="muscle-display">
                     <div class="bar-container">
-                        <div class="exp-bar" style="width: ${progress.muscleExpPercent}%"></div>
+                        <div class="exp-bar"></div>
                         <div class="bar-text">
-                            Muscle EXP: ${this.manager.state.muscleExp.toFixed(1)}/${progress.nextMuscleLevelExp}
+                            Muscle EXP: 0/0
                         </div>
                     </div>
                 </div>
                 
                 <div class="stamina-level-display">
                     <div class="bar-container">
-                        <div class="exp-bar" style="width: ${progress.staminaExpPercent}%"></div>
+                        <div class="exp-bar"></div>
                         <div class="bar-text">
-                            Stamina EXP: ${this.manager.state.staminaExp.toFixed(1)}/${progress.nextStaminaLevelExp}
+                            Stamina EXP: 0/0
                         </div>
                     </div>
                 </div>
                 
-                ${this.manager.state.injured ? `
-                <div class="injury-warning">
-                    ⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.
+                <div class="injury-warning" style="display:none">
+                    ⚠ INJURY WARNING
                 </div>
-                ` : 
-                this.manager.state.workoutWeight > maxLift * 0.9 ? `
-                <div class="injury-warning">
-                    ⚠ Lifting ${this.manager.state.workoutWeight}kg (${Math.round(this.manager.state.workoutWeight/maxLift*100)}% max) increases injury risk!
-                </div>
-                ` : ''}
-                ` : '<div>No character selected</div>'}
             </div>
         `;
 
@@ -104,6 +94,10 @@ export class BodybuildingPanel {
     }
 
     createWeightModal() {
+        if (this.weightModal) {
+            this.weightModal.remove();
+        }
+        
         const modal = document.createElement('div');
         modal.className = 'weight-modal';
         modal.style.cssText = `
@@ -151,8 +145,8 @@ export class BodybuildingPanel {
         }
         
         const weightInput = this.weightModal.querySelector('#weight-input');
-        weightInput.max = this.manager.getMaxLift();
         weightInput.value = this.manager.state.workoutWeight;
+        weightInput.max = this.manager.getMaxLift();
         
         this.weightModal.style.display = 'block';
     }
@@ -171,6 +165,7 @@ export class BodybuildingPanel {
             const weight = parseFloat(weightInput.value);
             if (!isNaN(weight)) {
                 const result = this.manager.setWorkoutWeight(weight);
+                this.manager.saveState();
                 toastr.success(result, "Weight Updated");
                 modal.style.display = 'none';
                 this.update();
@@ -180,29 +175,61 @@ export class BodybuildingPanel {
     
     update() {
         if (!this.domElement) return;
+        if (!this.manager.character) return;
         
         const progress = this.manager.getProgress();
+        const maxLift = progress.maxLift;
+        const warningEl = this.domElement.querySelector('.injury-warning');
         
-        // Update weight display
-        const weightDisplay = this.domElement.querySelector('.stat-card:nth-child(2) .stat-value');
-        if (weightDisplay) {
-            weightDisplay.innerHTML = `
-                ${this.manager.state.workoutWeight}kg
-                <button id="change-weight" class="action-icon">✏️</button>
-            `;
-        }
+        // Update stats
+        this.domElement.querySelector('.stat-card:nth-child(1) .stat-value').textContent = 
+            this.manager.state.muscleLevel;
+        this.domElement.querySelector('.stat-card:nth-child(2) .stat-value').innerHTML = 
+            `${this.manager.state.workoutWeight}kg<button id="change-weight" class="action-icon">✏️</button>`;
+        this.domElement.querySelector('.stat-card:nth-child(3) .stat-value').textContent = 
+            `${maxLift}kg`;
+        this.domElement.querySelector('.stat-card:nth-child(4) .stat-value').textContent = 
+            this.manager.state.staminaLevel;
+        
+        // Update bars
+        const staminaBar = this.domElement.querySelector('.stamina-bar');
+        staminaBar.style.width = `${progress.staminaPercent}%`;
+        this.domElement.querySelector('.stamina-display .bar-text').textContent = 
+            `Stamina: ${this.manager.state.currentStamina.toFixed(1)}/${progress.maxStamina}`;
+        
+        const muscleBar = this.domElement.querySelector('.muscle-display .exp-bar');
+        muscleBar.style.width = `${progress.muscleExpPercent}%`;
+        this.domElement.querySelector('.muscle-display .bar-text').textContent = 
+            `Muscle EXP: ${this.manager.state.muscleExp.toFixed(1)}/${progress.nextMuscleLevelExp}`;
+        
+        const staminaExpBar = this.domElement.querySelector('.stamina-level-display .exp-bar');
+        staminaExpBar.style.width = `${progress.staminaExpPercent}%`;
+        this.domElement.querySelector('.stamina-level-display .bar-text').textContent = 
+            `Stamina EXP: ${this.manager.state.staminaExp.toFixed(1)}/${progress.nextStaminaLevelExp}`;
+        
+        // Update activities
+        this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
+            btn.classList.toggle('active', 
+                btn.dataset.activity === this.manager.state.activity
+            );
+        });
         
         // Injury warning
-        const warning = this.domElement.querySelector('.injury-warning');
-        if (warning) {
-            if (this.manager.state.injured) {
-                warning.textContent = `⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.`;
-            } 
-            else if (this.manager.state.workoutWeight > progress.maxLift * 0.9) {
-                const ratio = Math.round(this.manager.state.workoutWeight / progress.maxLift * 100);
-                warning.textContent = `⚠ Lifting ${this.manager.state.workoutWeight}kg (${ratio}% max) increases injury risk!`;
-            }
+        if (this.manager.state.injured) {
+            warningEl.textContent = `⚠ INJURED! Rest for ${this.manager.state.injuryDuration} more days.`;
+            warningEl.style.display = 'block';
+        } 
+        else if (this.manager.state.workoutWeight > maxLift * 0.9) {
+            const ratio = Math.round(this.manager.state.workoutWeight / maxLift * 100);
+            warningEl.textContent = `⚠ Lifting at ${ratio}% max increases injury risk!`;
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
         }
+    }
+    
+    updateIfVisible() {
+        if (this.isVisible) this.update();
     }
     
     updateCharacter(name) {
@@ -217,57 +244,51 @@ export class BodybuildingPanel {
             const chatInput = document.getElementById('send_textarea');
             if (!chatInput) return;
 
-            chatInput.value = `/sys compact=true ${message}`;
+            chatInput.value = `/sys ${message}`;
             
             const sendButton = document.querySelector('#send_but');
             if (sendButton) {
                 sendButton.click();
-            } else {
-                const event = new KeyboardEvent('keydown', {
-                    key: 'Enter',
-                    code: 'Enter',
-                    bubbles: true
-                });
-                chatInput.dispatchEvent(event);
             }
         } catch (error) {
             console.error("Failed to send system message:", error);
         }
     }
     
-    toggle() {
-        if (!this.manager.character) {
-            toastr.info("Please select a character first");
-            return;
+    toggle(character) {
+        if (!this.domElement) {
+            this.domElement = this.createPanel();
+            this.attachEventListeners();
         }
         
-        if (!this.manager.state.enabled) {
-            const message = this.manager.enableSystem();
-            this.sendSystemMessage(message);
+        if (character) {
+            this.manager.setCharacter(character);
+            this.updateCharacter(character.name);
         }
         
-        this.isVisible ? this.hide() : this.show();
+        if (this.isVisible) {
+            this.hide();
+        } else {
+            this.show();
+        }
     }
     
     show() {
-        if (!this.domElement) {
-            this.domElement = this.createPanel();
-            this.makeDraggable(this.domElement);
-            this.attachEventListeners();
-        }
+        if (!this.domElement) return;
         this.domElement.style.display = 'block';
         this.update();
         this.isVisible = true;
     }
     
     hide() {
-        if (this.domElement) {
-            this.domElement.style.display = 'none';
-        }
+        if (!this.domElement) return;
+        this.domElement.style.display = 'none';
         this.isVisible = false;
     }
     
     attachEventListeners() {
+        if (!this.domElement) return;
+        
         // Weight change button
         this.domElement.addEventListener('click', (e) => {
             if (e.target.id === 'change-weight') {
@@ -277,19 +298,17 @@ export class BodybuildingPanel {
         
         // Activity buttons
         this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const activity = btn.dataset.activity;
-                if (this.manager.state.activity !== activity) {
-                    this.manager.setActivity(activity);
-                    this.update();
-                }
+            btn.addEventListener('click', (e) => {
+                const activity = e.target.dataset.activity;
+                this.manager.setActivity(activity);
+                this.update();
             });
         });
         
         // Refresh button
         this.domElement.querySelector('#bb-refresh').addEventListener('click', () => {
             this.manager.loadState();
-            toastr.success("Bodybuilding stats reloaded");
+            toastr.success("Stats reloaded");
             this.update();
         });
         
@@ -297,39 +316,5 @@ export class BodybuildingPanel {
         this.domElement.querySelector('#bb-close').addEventListener('click', () => {
             this.hide();
         });
-    }
-    
-    makeDraggable(element) {
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const header = element.querySelector('.bodybuilding-header');
-
-        if (header) {
-            header.onmousedown = dragMouseDown;
-        }
-
-        function dragMouseDown(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
-        }
-
-        function elementDrag(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
-        }
-
-        function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
     }
 }
