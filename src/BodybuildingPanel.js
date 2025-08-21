@@ -27,8 +27,8 @@ export class BodybuildingPanel {
             <div class="header">
                 <h3>Bodybuilding System</h3>
                 <div class="actions">
-                    <span id="refresh-btn">↻</span>
-                    <span id="close-btn">×</span>
+                    <span id="bb-refresh-btn">↻</span>
+                    <span id="bb-close-btn">×</span>
                 </div>
             </div>
             <div class="content">
@@ -41,40 +41,40 @@ export class BodybuildingPanel {
                 <div class="stats">
                     <div class="stat">
                         <label>Muscle Level:</label>
-                        <span id="muscle-level">1</span>
+                        <span class="stat-value" id="bb-muscle-level">1</span>
                     </div>
                     <div class="stat">
                         <label>Workout Weight:</label>
-                        <span id="workout-weight">10</span> kg 
-                        <button id="change-weight">✏️</button>
+                        <span class="stat-value" id="bb-workout-weight">10</span> kg 
+                        <button id="bb-change-weight">✏️</button>
                     </div>
                     <div class="stat">
                         <label>Max Lift:</label>
-                        <span id="max-lift">10</span> kg
+                        <span class="stat-value" id="bb-max-lift">10</span> kg
                     </div>
                     <div class="stat">
                         <label>Stamina Level:</label>
-                        <span id="stamina-level">1</span>
+                        <span class="stat-value" id="bb-stamina-level">1</span>
                     </div>
                 </div>
                 
                 <div class="progress-bar">
                     <div class="label">Stamina</div>
                     <div class="bar">
-                        <div id="stamina-bar" class="fill"></div>
+                        <div id="bb-stamina-bar" class="fill"></div>
                     </div>
-                    <div id="stamina-text" class="text">0/100</div>
+                    <div id="bb-stamina-text" class="text">0/100</div>
                 </div>
                 
                 <div class="progress-bar">
                     <div class="label">Muscle EXP</div>
                     <div class="bar">
-                        <div id="muscle-bar" class="fill"></div>
+                        <div id="bb-muscle-bar" class="fill"></div>
                     </div>
-                    <div id="muscle-text" class="text">0/100</div>
+                    <div id="bb-muscle-text" class="text">0/100</div>
                 </div>
                 
-                <div class="warning" id="injury-warning" style="display:none"></div>
+                <div class="warning" id="bb-injury-warning" style="display:none"></div>
             </div>
         `;
 
@@ -87,20 +87,29 @@ export class BodybuildingPanel {
         
         const progress = this.manager.getProgress();
         
-        this.domElement.getElementById('muscle-level').textContent = this.manager.state.muscleLevel;
-        this.domElement.getElementById('workout-weight').textContent = this.manager.state.workoutWeight;
-        this.domElement.getElementById('max-lift').textContent = this.manager.getMaxLift();
-        this.domElement.getElementById('stamina-level').textContent = this.manager.state.staminaLevel;
+        // Use querySelector on panel DOM element
+        this.domElement.querySelector('#bb-muscle-level').textContent = 
+            this.manager.state.muscleLevel;
+        this.domElement.querySelector('#bb-workout-weight').textContent = 
+            this.manager.state.workoutWeight;
+        this.domElement.querySelector('#bb-max-lift').textContent = 
+            this.manager.getMaxLift();
+        this.domElement.querySelector('#bb-stamina-level').textContent = 
+            this.manager.state.staminaLevel;
         
-        this.domElement.getElementById('stamina-bar').style.width = `${progress.staminaPercent}%`;
-        this.domElement.getElementById('stamina-text').textContent = 
-            `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
+        const staminaText = `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
+        this.domElement.querySelector('#bb-stamina-bar').style.width = 
+            `${progress.staminaPercent}%`;
+        this.domElement.querySelector('#bb-stamina-text').textContent = 
+            staminaText;
             
-        this.domElement.getElementById('muscle-bar').style.width = `${progress.muscleExpPercent}%`;
-        this.domElement.getElementById('muscle-text').textContent = 
-            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
+        const muscleText = `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
+        this.domElement.querySelector('#bb-muscle-bar').style.width = 
+            `${progress.muscleExpPercent}%`;
+        this.domElement.querySelector('#bb-muscle-text').textContent = 
+            muscleText;
             
-        const warning = this.domElement.getElementById('injury-warning');
+        const warning = this.domElement.querySelector('#bb-injury-warning');
         if (this.manager.state.injured) {
             warning.textContent = `INJURED! Rest for ${this.manager.state.injuryDuration} days`;
             warning.style.display = 'block';
@@ -114,18 +123,17 @@ export class BodybuildingPanel {
         const maxWeight = this.manager.getMaxLift();
         
         const weight = prompt(`Set workout weight (max: ${maxWeight}kg)`, currentWeight);
-        if (weight === null) return;
-        
-        const newWeight = parseFloat(weight);
-        if (isNaN(newWeight)) return;
-        
-        this.manager.setWorkoutWeight(newWeight);
-        this.update();
+        if (weight !== null) {
+            const newWeight = parseFloat(weight);
+            if (!isNaN(newWeight)) {
+                this.manager.setWorkoutWeight(newWeight);
+                this.update();
+            }
+        }
     }
 
     updateIfVisible() {
-        if (!this.isVisible) return;
-        this.update();
+        if (this.isVisible) this.update();
     }
 
     updateCharacter(name) {
@@ -139,34 +147,30 @@ export class BodybuildingPanel {
         if (!this.domElement) {
             this.domElement = this.createPanel();
             this.setupEventListeners();
+            this.update(); // Initialize with current state
         }
-        
         this.isVisible = !this.isVisible;
         this.domElement.style.display = this.isVisible ? 'block' : 'none';
-        
-        if (this.isVisible) this.update();
     }
 
     setupEventListeners() {
-        this.domElement.getElementById('close-btn').addEventListener('click', () => {
-            this.toggle();
-        });
-        
-        this.domElement.getElementById('refresh-btn').addEventListener('click', () => {
-            this.manager.loadState();
-            toastr.info("State refreshed");
-            this.update();
-        });
-        
-        this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.manager.setActivity(btn.dataset.activity);
+        // Use event delegation instead of direct element references
+        this.domElement.addEventListener('click', (e) => {
+            if (e.target.id === 'bb-close-btn') {
+                this.toggle();
+            }
+            else if (e.target.id === 'bb-refresh-btn') {
+                this.manager.loadState();
+                toastr.info("State refreshed");
                 this.update();
-            });
-        });
-        
-        this.domElement.getElementById('change-weight').addEventListener('click', () => {
-            this.showWeightDialog();
+            }
+            else if (e.target.id === 'bb-change-weight') {
+                this.showWeightDialog();
+            }
+            else if (e.target.classList.contains('activity-btn')) {
+                this.manager.setActivity(e.target.dataset.activity);
+                this.update();
+            }
         });
     }
 
@@ -175,6 +179,12 @@ export class BodybuildingPanel {
         if (!input) return;
         
         input.value = `/sys ${message}`;
-        input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+        
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            bubbles: true
+        });
+        input.dispatchEvent(event);
     }
 }
