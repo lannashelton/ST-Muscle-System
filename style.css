@@ -1,192 +1,143 @@
-/* 
- * Bodybuilding System Styles
- * Designed for SillyTavern compatibility
- */
-
+/* Bodybuilding System */
 #bodybuilding-panel {
     position: fixed;
     top: 150px;
     right: 20px;
     width: 320px;
-    background: var(--MenuItemBg);
-    background: -webkit-linear-gradient(var(--Gradient1), var(--Gradient2));
-    background: linear-gradient(var(--Gradient1), var(--Gradient2));
-    border: 1px solid var(--MenuItemBorder);
-    border-radius: 10px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border: 1px solid #3a6fca;
+    border-radius: 12px;
     padding: 15px;
     z-index: 100;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     display: none;
     user-select: none;
-    color: var(--MenuItemText);
-    font-family: var(--FontFamily);
-    transition: transform 0.2s ease;
+    color: #ffffff;
+    transition: transform 0.3s ease;
 }
 
-#bodybuilding-panel:hover {
-    transform: translateY(-2px);
+#bodybuilding-panel.dragging {
+    transform: scale(1.015);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
 }
 
-/* Header - Draggable Area */
 .draggable-header {
     cursor: move;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--MenuItemBorder);
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
     margin-bottom: 15px;
-    position: relative;
-}
-
-.draggable-header h3 {
-    margin: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--HoNavText);
-    font-size: 1.1em;
-    font-weight: bold;
 }
 
-.panel-actions {
-    display: flex;
-    gap: 10px;
-    margin-left: 10px;
-}
-
-.panel-actions span {
-    cursor: pointer;
-    opacity: 0.7;
-    transition: all 0.2s;
-    padding: 2px 5px;
-    font-size: 1.2em;
-    color: var(--HoNavText);
-}
-
-.panel-actions span:hover {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-/* Content Area */
 .activity-selector {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
 }
 
 .activity-btn {
-    flex: 1;
-    padding: 10px 0;
+    padding: 10px 5px;
     border: none;
     border-radius: 8px;
-    background: var(--FlButtonDisabled);
-    color: var(--FlButtonDisabledText);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
+    font-weight: bold;
     text-align: center;
     font-size: 0.9em;
-    font-weight: bold;
 }
 
 .activity-btn:hover {
-    background: var(--FlButtonBarChecked);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .activity-btn.active {
-    background: var(--FlButtonChecked);
-    color: var(--FlButtonTextChecked);
+    background: rgba(46, 204, 113, 0.8);
     box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
-    transform: translateY(-3px);
+    color: #fff;
 }
 
-/* Stats Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
 .stat-card {
-    background: rgba(30, 30, 40, 0.6);
+    background: rgba(0, 0, 0, 0.3);
     padding: 12px;
     border-radius: 8px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(5px);
 }
 
-.stat-label {
-    font-size: 0.8em;
+.stat-card .title {
+    font-size: 0.85em;
     opacity: 0.9;
-    margin-bottom: 8px;
-    color: #a0a0c0;
+    margin-bottom: 5px;
 }
 
-.stat-value {
-    font-size: 1.8em;
+.stat-card .value {
+    font-size: 1.4em;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 5px rgba(255,255,255,0.5);
+    color: #62b4ff;
 }
 
 #bb-change-weight {
     background: none;
     border: none;
+    color: #62b4ff;
     cursor: pointer;
-    font-size: 0.9em;
-    opacity: 0.7;
-    transition: all 0.2s;
-    color: var(--HoNavText);
-    vertical-align: top;
+    font-size: 1em;
     margin-left: 5px;
+    transition: transform 0.2s;
 }
 
 #bb-change-weight:hover {
-    opacity: 1;
     transform: scale(1.2);
 }
 
-/* Progress Bars */
 .progress-section {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-.progress-header {
+.progress-section .header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 5px;
+    font-weight: bold;
     font-size: 0.9em;
-    font-weight: bold;
-}
-
-.progress-amount {
-    color: #3498db;
-    font-weight: bold;
 }
 
 .progress-container {
     height: 20px;
-    background: rgba(20, 30, 48, 0.7);
+    background: rgba(0,0,0,0.3);
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
     position: relative;
 }
 
-.progress-bar {
+.progress-fill {
     height: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    transition: width 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: width 0.5s ease;
+    box-shadow: 0 0 5px rgba(255,255,255,0.2);
 }
 
 #bb-stamina-bar {
-    background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+    background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
 }
 
 #bb-muscle-bar {
-    background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%);
 }
 
 .progress-text {
@@ -198,37 +149,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8em;
+    font-size: 0.85em;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 3px black;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
 }
 
-/* Injury Warning */
 #bb-injury-warning {
-    padding: 12px 15px;
-    background: linear-gradient(90deg, rgba(235, 77, 75, 0.2) 0%, rgba(231, 76, 60, 0.1) 100%);
+    display: block;
+    padding: 10px;
+    background: rgba(229, 57, 53, 0.3);
     border-radius: 8px;
-    display: none;
     margin-top: 15px;
-    border-left: 4px solid #e74c3c;
-    color: #fff;
-    font-size: 0.9em;
+    border-left: 3px solid #e53935;
     font-weight: bold;
-}
-
-/* SillyTavern Fallbacks */
-:root {
-    --MenuItemBg: #1e1f28;
-    --MenuItemBorder: #404254;
-    --MenuItemText: #ece9f0;
-    --HoNavText: #e0e0ff;
-    --FlButtonDisabled: #34495e;
-    --FlButtonDisabledText: #ecf0f1;
-    --FlButtonChecked: #27ae60;
-    --FlButtonTextChecked: white;
-    --FlButtonBarChecked: #3498db;
-    --FontFamily: 'Segoe UI', system-ui, sans-serif;
-    --Gradient1: #2c3e50;
-    --Gradient2: #1a1f2a;
+    text-align: center;
 }
