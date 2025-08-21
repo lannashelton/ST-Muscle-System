@@ -12,9 +12,12 @@ try {
         const { BodybuildingManager } = await import("./src/BodybuildingManager.js");
         const { BodybuildingPanel } = await import("./src/BodybuildingPanel.js");
 
-        const MODULE_NAME = 'bodybuilding_system';
         const manager = new BodybuildingManager();
         const panel = new BodybuildingPanel(manager);
+        
+        // Ensure panel is created at load
+        panel.createPanel();
+        panel.hide();
 
         function getCurrentCharacter() {
             const context = getContext();
@@ -24,7 +27,10 @@ try {
         function updateCharacter() {
             try {
                 const character = getCurrentCharacter();
-                if (!character) return;
+                if (!character) {
+                    manager.setCharacter(null);
+                    return;
+                }
 
                 manager.setCharacter(character);
                 panel.updateCharacter(character.name);
@@ -37,12 +43,20 @@ try {
         function registerBodybuildingCommand() {
             try {
                 const { registerSlashCommand } = SillyTavern.getContext();
-                registerSlashCommand('body', () => panel.toggle(),
-                    [], 'Toggle bodybuilding system panel', true, true);
+                registerSlashCommand('body', commandHandler, [], 'Toggle bodybuilding system panel', true, true);
                 console.log("[BodybuildingSystem] Slash command registered");
             } catch (error) {
                 console.error("[BodybuildingSystem] Command registration failed", error);
             }
+        }
+        
+        function commandHandler() {
+            const character = getCurrentCharacter();
+            if (!character) {
+                toastr.info("Please select a character first");
+                return;
+            }
+            panel.toggle(character);
         }
 
         function setupEventListeners() {
@@ -66,7 +80,7 @@ try {
                         panel.sendSystemMessage(sysMessage);
                     }
                     
-                    panel.update();
+                    panel.updateIfVisible();
                 });
 
                 console.log("[BodybuildingSystem] Event listeners set up");
@@ -126,15 +140,14 @@ try {
         registerBodybuildingCommand();
         setupEventListeners();
         createSettingsUI();
-        // Initialize immediately
         updateCharacter();
 
         console.log("[BodybuildingSystem] Extension loaded successfully");
     }
 
-    $(document).ready(() => {
+    $(async () => {
         try {
-            initializeExtension();
+            await initializeExtension();
         } catch (error) {
             console.error("[BodybuildingSystem] Initialization failed", error);
         }
