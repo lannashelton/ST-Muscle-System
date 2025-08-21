@@ -35,15 +35,18 @@ export class BodybuildingPanel {
                 </h3>
             </div>
             <div class="content">
-                <div class="activity-selector" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div class="activity-selector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                    <button data-activity="idle" class="activity-btn" 
+                            style="padding: 10px; border: none; border-radius: 8px; 
+                                   background: #6082b6; color: white; cursor: pointer;">Idle</button>
                     <button data-activity="resting" class="activity-btn" 
-                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                            style="padding: 10px; border: none; border-radius: 8px; 
                                    background: #6082b6; color: white; cursor: pointer;">Resting</button>
                     <button data-activity="cardio" class="activity-btn" 
-                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                            style="padding: 10px; border: none; border-radius: 8px; 
                                    background: #6082b6; color: white; cursor: pointer;">Cardio</button>
                     <button data-activity="training" class="activity-btn" 
-                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                            style="padding: 10px; border: none; border-radius: 8px; 
                                    background: #6082b6; color: white; cursor: pointer;">Training</button>
                 </div>
                 
@@ -132,7 +135,7 @@ export class BodybuildingPanel {
 
     updateButtonStates() {
         if (!this.domElement) return;
-        const activities = ['resting', 'cardio', 'training'];
+        const activities = ['idle', 'resting', 'cardio', 'training'];
         
         activities.forEach(activity => {
             const btn = this.domElement.querySelector(`button[data-activity="${activity}"]`);
@@ -154,18 +157,18 @@ export class BodybuildingPanel {
         // Update stats
         this.domElement.querySelector('#bb-muscle-level').textContent = this.manager.state.muscleLevel;
         this.domElement.querySelector('#bb-workout-weight').textContent = `${this.manager.state.workoutWeight}kg`;
-        this.domElement.querySelector('#bb-max-lift').textContent = `${this.manager.getMaxLift()}kg`;
+        this.domElement.querySelector('#bb-max-lift').textContent = `${this.manager.getMaxLift().toFixed(1)}kg`;
         this.domElement.querySelector('#bb-stamina-level').textContent = this.manager.state.staminaLevel;
         
         // Update bars
         const progress = this.manager.getProgress();
         this.domElement.querySelector('#bb-stamina-bar').style.width = `${progress.staminaPercent}%`;
         this.domElement.querySelector('#bb-stamina-text').textContent = 
-            `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
+            `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina().toFixed(1)}`;
         
         this.domElement.querySelector('#bb-muscle-bar').style.width = `${progress.muscleExpPercent}%`;
         this.domElement.querySelector('#bb-muscle-text').textContent = 
-            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
+            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle').toFixed(1)}`;
         
         // Update injury
         const warning = this.domElement.querySelector('#bb-injury-warning');
@@ -206,7 +209,7 @@ export class BodybuildingPanel {
         // Weight edit button
         this.domElement.querySelector('#bb-change-weight').addEventListener('click', () => {
             const max = this.manager.getMaxLift();
-            const weight = prompt(`Set workout weight (max: ${max}kg)`, this.manager.state.workoutWeight);
+            const weight = prompt(`Set workout weight (max: ${max.toFixed(1)}kg)`, this.manager.state.workoutWeight);
             if (weight !== null) {
                 const newWeight = parseFloat(weight);
                 if (!isNaN(newWeight)) {
@@ -236,6 +239,12 @@ export class BodybuildingPanel {
         this.domElement.style.display = this.isVisible ? 'block' : 'none';
         
         if (this.isVisible && this.manager.character) {
+            this.update();
+        }
+    }
+
+    updateIfVisible() {
+        if (this.isVisible && this.domElement) {
             this.update();
         }
     }
