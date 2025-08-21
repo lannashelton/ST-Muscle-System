@@ -1,35 +1,9 @@
-import { getContext, extension_settings } from "../../../extensions.js";
+import { extension_settings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
 export const MODULE_NAME = 'bodybuilding_system';
 
 console.log("[BodybuildingSystem] Starting extension loading...");
-
-function getCurrentCharacter() {
-    const context = getContext();
-    return context.characters[context.characterId] || null;
-}
-
-function registerSlashCommand(panel) {
-    try {
-        console.log("[BodybuildingSystem] Attempting to register /body command");
-        const { registerSlashCommand } = getContext();
-        
-        registerSlashCommand('body', async () => {
-            console.log("[BodybuildingSystem] /body command triggered");
-            const character = getCurrentCharacter();
-            if (!character) {
-                toastr.info("Please select a character first");
-                return;
-            }
-            panel.toggle();
-        }, [], 'Toggle bodybuilding system panel', true, true);
-        
-        console.log("[BodybuildingSystem] /body command registered successfully");
-    } catch (error) {
-        console.error("[BodybuildingSystem] Failed to register command:", error);
-    }
-}
 
 async function initializeExtension() {
     try {
@@ -40,6 +14,11 @@ async function initializeExtension() {
 
         const manager = new BodybuildingManager();
         const panel = new BodybuildingPanel(manager);
+
+        function getCurrentCharacter() {
+            const context = SillyTavern.getContext();
+            return context.characters[context.characterId] || null;
+        }
 
         function updateCharacter() {
             try {
@@ -57,17 +36,35 @@ async function initializeExtension() {
             }
         }
 
+        function registerBodyCommand() {
+            try {
+                console.log("[BodybuildingSystem] Attempting to register /body command");
+                const { registerSlashCommand } = SillyTavern.getContext();
+                
+                registerSlashCommand('body', async () => {
+                    console.log("[BodybuildingSystem] /body command triggered");
+                    const character = getCurrentCharacter();
+                    if (!character) {
+                        toastr.info("Please select a character first");
+                        return;
+                    }
+                    panel.toggle();
+                }, [], 'Toggle bodybuilding system panel', true, true);
+                
+                console.log("[BodybuildingSystem] /body command registered successfully");
+            } catch (error) {
+                console.error("[BodybuildingSystem] Failed to register command:", error);
+            }
+        }
+
         function setupEventListeners() {
             try {
                 console.log("[BodybuildingSystem] Setting up event listeners");
-                const { eventSource, event_types } = getContext();
+                const { eventSource, event_types } = SillyTavern.getContext();
 
                 eventSource.on(event_types.CHAT_CHANGED, updateCharacter);
                 eventSource.on(event_types.CHARACTER_CHANGED, updateCharacter);
-                eventSource.on(event_types.APP_READY, () => {
-                    console.log("[BodybuildingSystem] APP_READY received");
-                    updateCharacter();
-                });
+                eventSource.on(event_types.APP_READY, updateCharacter);
 
                 eventSource.on(event_types.MESSAGE_RECEIVED, () => {
                     const character = getCurrentCharacter();
@@ -133,7 +130,7 @@ async function initializeExtension() {
         // Initialize components in proper order
         initSettings();
         setupEventListeners();
-        registerSlashCommand(panel); // Register command BEFORE updateCharacter
+        registerBodyCommand();  // Use the new registration function
         updateCharacter();
 
         console.log("[BodybuildingSystem] Initialization complete");
