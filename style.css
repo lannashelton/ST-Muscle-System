@@ -1,8 +1,18 @@
 /* Bodybuilding System */
 #bodybuilding-panel {
-    font-family: inherit;
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    width: 320px;
+    background: var(--SmartThemeBodyBgColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    padding: 15px;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
     color: var(--SmartThemeBodyColor);
-    z-index: 20;
+    font-family: inherit;
 }
 
 #bodybuilding-panel .header {
@@ -18,6 +28,12 @@
     cursor: pointer;
     margin-left: 10px;
     font-size: 1.2em;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+#bodybuilding-panel .actions span:hover {
+    opacity: 1;
 }
 
 #bodybuilding-panel .stats {
@@ -29,12 +45,19 @@
 
 #bodybuilding-panel .stat {
     background: var(--BlockBorderColor);
-    padding: 5px;
+    padding: 8px;
     border-radius: 4px;
+    font-size: 0.9em;
+}
+
+#bodybuilding-panel .stat-value {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--SmartThemeHighlightColor);
 }
 
 #bodybuilding-panel .progress-bar {
-    margin: 10px 0;
+    margin: 12px 0;
 }
 
 #bodybuilding-panel .bar {
@@ -42,32 +65,84 @@
     background: var(--black30a);
     border-radius: 4px;
     overflow: hidden;
+    position: relative;
 }
 
-#bodybuilding-panel .fill {
+#bodybuilding-panel .bar .fill {
     height: 100%;
-    background: var(--greenNumber);
-    width: 0%;
+    position: absolute;
+    top: 0;
+    left: 0;
     transition: width 0.5s;
 }
 
-#bodybuilding-panel .activity-btn {
+#bodybuilding-panel .stamina-bar {
+    background: #4caf50;
+}
+
+#bodybuilding-panel .muscle-bar {
+    background: #2196f3;
+}
+
+#bodybuilding-panel .bar .text {
+    position: absolute;
     width: 100%;
-    padding: 5px;
-    margin: 3px 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85em;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#bodybuilding-panel .label {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+#bodybuilding-panel .activity-selector {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+}
+
+#bodybuilding-panel .activity-btn {
+    padding: 8px 12px;
     background: var(--BlockBorderColor);
     border: none;
     border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
 }
 
-#bodybuilding-panel .activity-btn:hover {
-    background: var(--BlockBorderColorDark);
+#bodybuilding-panel .activity-btn:hover,
+#bodybuilding-panel .activity-btn.active {
+    background: var(--SmartThemeActiveSwitchColor);
+    color: var(--SmartThemeButtonTextColor);
+}
+
+#bodybuilding-panel #bb-change-weight {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 5px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+#bodybuilding-panel #bb-change-weight:hover {
+    opacity: 1;
 }
 
 #bodybuilding-panel .warning {
-    background: rgba(255, 100, 100, 0.2);
+    margin-top: 15px;
+    padding: 8px 10px;
+    background: rgba(255, 100, 100, 0.1);
     border-radius: 4px;
-    padding: 5px;
-    margin-top: 10px;
     color: #ff6464;
+    font-size: 0.85em;
+    border: 1px solid #ff646440;
 }
