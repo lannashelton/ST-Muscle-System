@@ -13,11 +13,9 @@ export class BodybuildingManager {
             staminaLevel: 1,
             staminaExp: 0,
             currentStamina: 0,
-            trainingIntensity: 60,
+            workoutWeight: 10, // Default weight (kg)
             injured: false,
-            injuryDuration: 0,
-            maxLiftToday: 0,
-            totalLiftedToday: 0
+            injuryDuration: 0
         };
 
         // Level definitions
@@ -105,11 +103,9 @@ export class BodybuildingManager {
         this.state.staminaLevel = parseInt(this.getGlobalVariable('stamina_level')) || 1;
         this.state.staminaExp = parseFloat(this.getGlobalVariable('stamina_exp')) || 0;
         this.state.currentStamina = parseFloat(this.getGlobalVariable('current_stamina')) || 0;
-        this.state.trainingIntensity = parseInt(this.getGlobalVariable('training_intensity')) || 60;
+        this.state.workoutWeight = parseInt(this.getGlobalVariable('workout_weight')) || 10;
         this.state.injured = Boolean(this.getGlobalVariable('injured'));
         this.state.injuryDuration = parseInt(this.getGlobalVariable('injury_duration')) || 0;
-        this.state.maxLiftToday = parseFloat(this.getGlobalVariable('max_lift_today')) || 0;
-        this.state.totalLiftedToday = parseFloat(this.getGlobalVariable('total_lifted_today')) || 0;
         
         // Initialize current stamina if empty
         if (this.state.currentStamina === 0 && this.state.enabled) {
@@ -125,22 +121,13 @@ export class BodybuildingManager {
         this.setGlobalVariable('muscle_level', this.state.muscleLevel);
         this.setGlobalVariable('muscle_exp', this.state.muscleExp);
         this.setGlobalVariable('stamina_level', this.state.staminaLevel);
-        this.setGlobalVariable('stamina_exp', Math.floor(this.state.staminaExp * 10) / 10); // Round to 1 decimal
+        this.setGlobalVariable('stamina_exp', Math.floor(this.state.staminaExp * 10) / 10);
         this.setGlobalVariable('current_stamina', Math.floor(this.state.currentStamina * 10) / 10);
-        this.setGlobalVariable('training_intensity', this.state.trainingIntensity);
+        this.setGlobalVariable('workout_weight', this.state.workoutWeight);
         this.setGlobalVariable('injured', this.state.injured ? 1 : 0);
         this.setGlobalVariable('injury_duration', this.state.injuryDuration);
-        this.setGlobalVariable('max_lift_today', this.state.maxLiftToday);
-        this.setGlobalVariable('total_lifted_today', this.state.totalLiftedToday);
         
         console.log('[BodybuildingManager] State saved');
-    }
-    
-    resetDailyStats() {
-        this.state.maxLiftToday = 0;
-        this.state.totalLiftedToday = 0;
-        this.state.currentStamina = this.getMaxStamina();
-        this.saveState();
     }
     
     // ===== Stats Calculation =====
@@ -219,16 +206,19 @@ export class BodybuildingManager {
     }
     
     processTraining() {
-        const intensity = this.state.trainingIntensity / 100;
+        const weight = this.state.workoutWeight;
         const maxLift = this.getMaxLift();
         
-        // Calculate stamina cost
+        // Validate workout weight
+        if (weight > maxLift) {
+            return `${this.character.name} can't lift ${weight}kg (max: ${maxLift}kg)`;
+        }
+        
+        // Calculate stamina cost (weight/max ratio based)
+        const weightRatio = weight / maxLift;
         const baseCost = 20;
-        const intensityFactor = intensity * 40; // Additional cost based on intensity
-        const staminaCost = Math.min(
-            this.state.currentStamina,
-            baseCost + intensityFactor
-        );
+        const weightFactor = weightRatio * 40; // Scales with weight
+        const staminaCost = baseCost + weightFactor;
         
         // Check if enough stamina
         if (this.state.currentStamina < staminaCost) {
@@ -239,31 +229,28 @@ export class BodybuildingManager {
         // Apply stamina cost
         this.state.currentStamina -= staminaCost;
         
-        // Calculate exp gain with intensity modifier
-        const rawExp = intensity * 15; // Base 0-15 exp
-        let actualExp = rawExp;
+        // Calculate exp gain (0-20 range based on weight)
+        const baseExp = 10;
+        const weightBonus = weightRatio * 10;
+        let expGain = baseExp + weightBonus;
         
-        // EXP modifiers
-        if (intensity < 0.3) actualExp *= 0.5; // Low intensity penalty
-        if (intensity > 0.9 && extension_settings.bodybuilding_system?.riskOfInjury) {
-            actualExp *= 1.5; // High intensity bonus
-            if (Math.random() > 0.9) { // 10% injury risk
+        // Injury risk at >=90% max weight
+        if (weightRatio >= 0.9 && extension_settings.bodybuilding_system?.riskOfInjury) {
+            expGain *= 1.5; // High weight bonus
+            if (Math.random() > 0.9) { // 10% injury chance
                 this.state.injured = true;
-                this.state.injuryDuration = 3; // 3"days" (message cycles)
-                return `${this.character.name} strained a muscle during heavy lifting! Need 3 days rest.`;
+                this.state.injuryDuration = 3;
+                return `${this.character.name} strained a muscle lifting ${weight}kg!`;
             }
         }
         
-        // Update stats
-        const weightLifted = intensity * maxLift;
-        this.state.totalLiftedToday += weightLifted;
-        if (weightLifted > this.state.maxLiftToday) {
-            this.state.maxLiftToday = weightLifted;
-        }
-        this.addMuscleExp(actualExp);
+        // EXP modifiers
+        if (weightRatio < 0.3) expGain *= 0.7; // Low weight penalty
+        if (weightRatio > 0.95) expGain *= 1.2; // High weight bonus
         
+        this.addMuscleExp(expGain);
         this.saveState();
-        return `${this.character.name} lifted ${weightLifted.toFixed(1)}kg weights`;
+        return `${this.character.name} lifted ${weight}kg`;
     }
     
     processInjury() {
@@ -272,14 +259,14 @@ export class BodybuildingManager {
             this.state.injured = false;
             return `${this.character.name}'s injury has healed`;
         }
-        return `${this.character.name} is recovering from injury (${this.state.injuryDuration} days left)`;
+        return `${this.character.name} is recovering (${this.state.injuryDuration} days left)`;
     }
 
     // ===== Level Management =====
     addMuscleExp(amount) {
         this.state.muscleExp += amount;
         
-        // Check level up
+        // Level up
         while (this.state.muscleExp >= this.getRequiredExp('muscle') && 
                this.state.muscleLevel < 15) {
             this.state.muscleExp -= this.getRequiredExp('muscle');
@@ -290,15 +277,30 @@ export class BodybuildingManager {
     addStaminaExp(amount) {
         this.state.staminaExp += amount;
         
-        // Check level up
+        // Level up
         while (this.state.staminaExp >= this.getRequiredExp('stamina') && 
                this.state.staminaLevel < 10) {
             this.state.staminaExp -= this.getRequiredExp('stamina');
             this.state.staminaLevel++;
             
-            // Increase max stamina when leveling
+            // Increase stamina cap when leveling
             this.state.currentStamina = this.getMaxStamina();
         }
+    }
+    
+    // ===== Weight Management =====
+    setWorkoutWeight(weight) {
+        if (weight < 0) return "Weight can't be negative";
+        
+        const maxLift = this.getMaxLift();
+        if (weight > maxLift) {
+            this.state.workoutWeight = maxLift;
+            return `${this.character.name}'s max is ${maxLift}kg. Weight set to max.`;
+        }
+        
+        this.state.workoutWeight = weight;
+        this.saveState();
+        return `Workout weight set to ${weight}kg`;
     }
     
     // ===== UI Actions =====
@@ -307,12 +309,5 @@ export class BodybuildingManager {
         this.state.activity = activity;
         this.saveState();
         return `${this.character.name} started ${activity}`;
-    }
-    
-    setTrainingIntensity(intensity) {
-        if (intensity < 0 || intensity > 100) return "Invalid intensity";
-        this.state.trainingIntensity = intensity;
-        this.saveState();
-        return `Training intensity set to ${intensity}%`;
     }
 }
