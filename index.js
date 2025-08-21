@@ -5,6 +5,23 @@ export const MODULE_NAME = 'bodybuilding_system';
 
 console.log("[BodybuildingSystem] Starting extension loading...");
 
+function getCurrentCharacter() {
+    const context = getContext();
+    return context.characters[context.characterId] || null;
+}
+
+function registerSlashCommand(panel) {
+    const context = getContext();
+    context.registerSlashCommand('body', async () => {
+        const character = getCurrentCharacter();
+        if (!character) {
+            toastr.info("Please select a character first");
+            return;
+        }
+        panel.toggle();
+    }, [], 'Toggle bodybuilding system panel', true, true);
+}
+
 async function initializeExtension() {
     try {
         const { BodybuildingManager } = await import("./src/BodybuildingManager.js");
@@ -13,33 +30,18 @@ async function initializeExtension() {
         const manager = new BodybuildingManager();
         const panel = new BodybuildingPanel(manager);
 
-        function getCurrentCharacter() {
-            const context = getContext();
-            return context.characters[context.characterId] || null;
-        }
-
         function updateCharacter() {
             try {
                 const character = getCurrentCharacter();
-                if (!character) return;
-
+                if (!character) {
+                    manager.setCharacter(null);
+                    return;
+                }
                 manager.setCharacter(character);
                 panel.updateCharacter(character.name);
             } catch (error) {
                 console.error("Character update failed", error);
             }
-        }
-
-        function registerSlashCommand() {
-            const { registerSlashCommand } = SillyTavern.getContext();
-            registerSlashCommand('body', async () => {
-                const character = getCurrentCharacter();
-                if (!character) {
-                    toastr.info("Please select a character first");
-                    return;
-                }
-                panel.toggle();
-            }, [], 'Toggle bodybuilding panel', true, true);
         }
 
         function setupEventListeners() {
@@ -78,12 +80,12 @@ async function initializeExtension() {
                         <div class="inline-drawer-icon down"></div>
                     </div>
                     <div class="inline-drawer-content">
-                        <div class="flex-container">
-                            <label for="bb-sys-toggle">System messages</label>
+                        <div class="flex-container" style="margin-bottom: 10px;">
+                            <label for="bb-sys-toggle" style="flex-grow: 1;">System messages</label>
                             <input type="checkbox" id="bb-sys-toggle" ${extension_settings[MODULE_NAME].enableSysMessages ? 'checked' : ''}>
                         </div>
                         <div class="flex-container">
-                            <label for="bb-injury-toggle">Injury risk</label>
+                            <label for="bb-injury-toggle" style="flex-grow: 1;">Injury risk</label>
                             <input type="checkbox" id="bb-injury-toggle" ${extension_settings[MODULE_NAME].riskOfInjury ? 'checked' : ''}>
                         </div>
                     </div>
@@ -104,7 +106,7 @@ async function initializeExtension() {
         }
 
         initSettings();
-        registerSlashCommand();
+        registerSlashCommand(panel);
         setupEventListeners();
         createSettingsUI();
         updateCharacter();
