@@ -1,5 +1,5 @@
 import { getContext, extension_settings } from "../../../extensions.js";
-import { saveSettingsDebounced } from "../../../../script.js";
+import { saveSettingsDebounced, SlashCommandParser, SlashCommand } from "../../../../script.js"; // Add SlashCommand imports
 
 export const MODULE_NAME = 'bodybuilding_system';
 
@@ -11,15 +11,26 @@ function getCurrentCharacter() {
 }
 
 function registerSlashCommand(panel) {
-    const context = getContext();
-    context.registerSlashCommand('body', async () => {
-        const character = getCurrentCharacter();
-        if (!character) {
-            toastr.info("Please select a character first");
-            return;
-        }
-        panel.toggle();
-    }, [], 'Toggle bodybuilding system panel', true, true);
+    try {
+        SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+            name: 'body',
+            callback: async (namedArgs, unnamedArgs) => {
+                const character = getCurrentCharacter();
+                if (!character) {
+                    toastr.info("Please select a character first");
+                    return;
+                }
+                panel.toggle();
+            },
+            returns: 'nothing',
+            description: 'Toggles bodybuilding system panel',
+            helpString: 'Opens/closes the bodybuilding management interface',
+            isDirect: true
+        }));
+        console.log("[BodybuildingSystem] Slash command '/body' registered successfully");
+    } catch (error) {
+        console.error("[BodybuildingSystem] Failed to register slash command:", error);
+    }
 }
 
 async function initializeExtension() {
