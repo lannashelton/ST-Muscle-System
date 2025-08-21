@@ -3,6 +3,8 @@ export class BodybuildingPanel {
         this.manager = manager;
         this.isVisible = false;
         this.domElement = null;
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
     }
 
     createPanel() {
@@ -14,24 +16,25 @@ export class BodybuildingPanel {
             top: 120px;
             right: 20px;
             width: 320px;
-            background: var(--SmartThemeMenuColor);
+            background: var(--SmartThemeBodyBgColor);
             border: 1px solid var(--SmartThemeBorderColor);
             border-radius: 10px;
             padding: 15px;
             z-index: 100;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             display: none;
+            user-select: none;
         `;
 
         panel.innerHTML = `
-            <div class="header">
+            <div class="draggable-header" style="cursor: move;">
                 <h3>Bodybuilding System</h3>
                 <div class="actions">
                     <span id="bb-refresh-btn">↻</span>
                     <span id="bb-close-btn">×</span>
                 </div>
             </div>
-            <div class="content">
+            <div class="content" style="margin-top: 10px;">
                 <div class="activity-selector">
                     <button data-activity="resting" class="activity-btn">Resting</button>
                     <button data-activity="cardio" class="activity-btn">Cardio</button>
@@ -62,16 +65,16 @@ export class BodybuildingPanel {
                     <div class="label">Stamina</div>
                     <div class="bar">
                         <div id="bb-stamina-bar" class="fill"></div>
+                        <div id="bb-stamina-text" class="text">0/100</div>
                     </div>
-                    <div id="bb-stamina-text" class="text">0/100</div>
                 </div>
                 
                 <div class="progress-bar">
                     <div class="label">Muscle EXP</div>
                     <div class="bar">
                         <div id="bb-muscle-bar" class="fill"></div>
+                        <div id="bb-muscle-text" class="text">0/100</div>
                     </div>
-                    <div id="bb-muscle-text" class="text">0/100</div>
                 </div>
                 
                 <div class="warning" id="bb-injury-warning" style="display:none"></div>
@@ -87,28 +90,36 @@ export class BodybuildingPanel {
         
         const progress = this.manager.getProgress();
         
-        // Use querySelector on panel DOM element
+        // Update stats
         this.domElement.querySelector('#bb-muscle-level').textContent = 
             this.manager.state.muscleLevel;
+        
         this.domElement.querySelector('#bb-workout-weight').textContent = 
             this.manager.state.workoutWeight;
+        
         this.domElement.querySelector('#bb-max-lift').textContent = 
             this.manager.getMaxLift();
+        
         this.domElement.querySelector('#bb-stamina-level').textContent = 
             this.manager.state.staminaLevel;
         
+        // Update bars and labels
         const staminaText = `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
-        this.domElement.querySelector('#bb-stamina-bar').style.width = 
-            `${progress.staminaPercent}%`;
-        this.domElement.querySelector('#bb-stamina-text').textContent = 
-            staminaText;
-            
+        const staminaBar = this.domElement.querySelector('#bb-stamina-bar');
+        staminaBar.style.width = `${progress.staminaPercent}%`;
+        this.domElement.querySelector('#bb-stamina-text').textContent = staminaText;
+        
         const muscleText = `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
-        this.domElement.querySelector('#bb-muscle-bar').style.width = 
-            `${progress.muscleExpPercent}%`;
-        this.domElement.querySelector('#bb-muscle-text').textContent = 
-            muscleText;
-            
+        const muscleBar = this.domElement.querySelector('#bb-muscle-bar');
+        muscleBar.style.width = `${progress.muscleExpPercent}%`;
+        this.domElement.querySelector('#bb-muscle-text').textContent = muscleText;
+        
+        // Update activity buttons
+        this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.activity === this.manager.state.activity);
+        });
+        
+        // Update injury warning
         const warning = this.domElement.querySelector('#bb-injury-warning');
         if (this.manager.state.injured) {
             warning.textContent = `INJURED! Rest for ${this.manager.state.injuryDuration} days`;
@@ -138,7 +149,7 @@ export class BodybuildingPanel {
 
     updateCharacter(name) {
         if (!this.domElement) return;
-        const header = this.domElement.querySelector('.header h3');
+        const header = this.domElement.querySelector('.draggable-header h3');
         if (header) header.textContent = `Bodybuilding: ${name}`;
         this.update();
     }
@@ -147,32 +158,66 @@ export class BodybuildingPanel {
         if (!this.domElement) {
             this.domElement = this.createPanel();
             this.setupEventListeners();
-            this.update(); // Initialize with current state
         }
         this.isVisible = !this.isVisible;
         this.domElement.style.display = this.isVisible ? 'block' : 'none';
+        if (this.isVisible) this.update();
     }
 
     setupEventListeners() {
-        // Use event delegation instead of direct element references
-        this.domElement.addEventListener('click', (e) => {
-            if (e.target.id === 'bb-close-btn') {
-                this.toggle();
-            }
-            else if (e.target.id === 'bb-refresh-btn') {
-                this.manager.loadState();
-                toastr.info("State refreshed");
+        // Activity buttons
+        this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.manager.setActivity(btn.dataset.activity);
                 this.update();
-            }
-            else if (e.target.id === 'bb-change-weight') {
-                this.showWeightDialog();
-            }
-            else if (e.target.classList.contains('activity-btn')) {
-                this.manager.setActivity(e.target.dataset.activity);
-                this.update();
-            }
+            });
         });
+        
+        // Buttons
+        this.domElement.querySelector('#bb-close-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle();
+        });
+        
+        this.domElement.querySelector('#bb-refresh-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.manager.loadState();
+            toastr.info("State refreshed");
+            this.update();
+        });
+        
+        this.domElement.querySelector('#bb-change-weight').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showWeightDialog();
+        });
+        
+        // Drag functionality
+        const header = this.domElement.querySelector('.draggable-header');
+        header.addEventListener('mousedown', this.startDrag.bind(this));
     }
+
+    startDrag(e) {
+        if (e.target !== this.domElement.querySelector('.draggable-header')) return;
+        
+        const panelRect = this.domElement.getBoundingClientRect();
+        this.dragOffset = {
+            x: e.clientX - panelRect.left,
+            y: e.clientY - panelRect.top
+        };
+        
+        document.addEventListener('mousemove', this.dragPanel);
+        document.addEventListener('mouseup', this.stopDrag);
+    }
+    
+    dragPanel = (e) => {
+        this.domElement.style.left = `${e.clientX - this.dragOffset.x}px`;
+        this.domElement.style.top = `${e.clientY - this.dragOffset.y}px`;
+    };
+    
+    stopDrag = () => {
+        document.removeEventListener('mousemove', this.dragPanel);
+        document.removeEventListener('mouseup', this.stopDrag);
+    };
 
     sendSystemMessage(message) {
         const input = document.getElementById('send_textarea');
