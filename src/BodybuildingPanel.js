@@ -3,7 +3,6 @@ export class BodybuildingPanel {
         this.manager = manager;
         this.isVisible = false;
         this.domElement = null;
-        this.dragOffset = { x: 0, y: 0 };
     }
 
     createPanel() {
@@ -12,78 +11,84 @@ export class BodybuildingPanel {
         panel.className = 'bodybuilding-panel';
         panel.style.cssText = `
             position: fixed;
-            top: 120px;
+            top: 150px;
             right: 20px;
             width: 320px;
-            background: var(--BodybuildingPanelBg);
-            border: 1px solid var(--BodybuildingBorder);
+            background: var(--MenuItemBg);
+            border: 1px solid var(--MenuItemBorder);
             border-radius: 10px;
             padding: 15px;
             z-index: 100;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             display: none;
             user-select: none;
-            color: var(--BodybuildingText);
         `;
 
         panel.innerHTML = `
-            <div class="header" style="cursor: move; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--BodybuildingBorder);">
-                <h3 style="margin: 0; font-size: 1.2em;">Bodybuilding System</h3>
-                <div class="actions" style="display: flex; gap: 10px;">
-                    <span id="bb-refresh-btn" style="cursor: pointer; opacity: 0.7; font-weight: bold;">⭯</span>
-                    <span id="bb-close-btn" style="cursor: pointer; opacity: 0.7; font-weight: bold;">✕</span>
-                </div>
+            <div class="draggable-header" style="cursor: move; padding-bottom: 10px; border-bottom: 1px solid var(--MenuItemBorder); margin-bottom: 15px;">
+                <h3 style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Bodybuilding System</span>
+                    <div>
+                        <span id="bb-refresh-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">↻</span>
+                        <span id="bb-close-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">×</span>
+                    </div>
+                </h3>
             </div>
             <div class="content">
-                <div class="activity-selector" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <button data-activity="resting" class="activity-btn" style="padding: 8px 12px; background: var(--ActivityBtnBg); border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">Resting</button>
-                    <button data-activity="cardio" class="activity-btn" style="padding: 8px 12px; background: var(--ActivityBtnBg); border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">Cardio</button>
-                    <button data-activity="training" class="activity-btn" style="padding: 8px 12px; background: var(--ActivityBtnBg); border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">Training</button>
+                <div class="activity-selector" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button data-activity="resting" class="activity-btn" 
+                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                                   background: #6082b6; color: white; cursor: pointer;">Resting</button>
+                    <button data-activity="cardio" class="activity-btn" 
+                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                                   background: #6082b6; color: white; cursor: pointer;">Cardio</button>
+                    <button data-activity="training" class="activity-btn" 
+                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; 
+                                   background: #6082b6; color: white; cursor: pointer;">Training</button>
                 </div>
                 
-                <div class="stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                    <div class="stat" style="background: var(--StatBg); padding: 10px; border-radius: 5px;">
-                        <div>Muscle Lvl:</div>
-                        <div class="stat-value" id="bb-muscle-level" style="font-weight: bold; font-size: 1.3em; margin-top: 5px;">1</div>
+                <div class="stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 0.9em; margin-bottom: 5px;">Muscle Level</div>
+                        <div id="bb-muscle-level" style="font-size: 1.6em; font-weight: bold; text-align: center;">1</div>
                     </div>
-                    <div class="stat" style="background: var(--StatBg); padding: 10px; border-radius: 5px;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span>Weight:</span>
-                            <button id="bb-change-weight" style="background: none; border: none; cursor: pointer; font-size: 0.9em; padding: 0; margin-top: 3px;">✏️</button>
+                    
+                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="font-size: 0.9em;">Workout Weight</div>
+                            <button id="bb-change-weight" style="background: none; border: none; cursor: pointer; color: white;">✏️</button>
                         </div>
-                        <div class="stat-value" id="bb-workout-weight" style="font-weight: bold; font-size: 1.3em; margin-top: 5px;">10kg</div>
+                        <div id="bb-workout-weight" style="font-size: 1.6em; font-weight: bold; text-align: center;">10kg</div>
                     </div>
-                    <div class="stat" style="background: var(--StatBg); padding: 10px; border-radius: 5px;">
-                        <div>Max Lift:</div>
-                        <div class="stat-value" id="bb-max-lift" style="font-weight: bold; font-size: 1.3em; margin-top: 5px;">10kg</div>
+                    
+                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 0.9em; margin-bottom: 5px;">Max Lift</div>
+                        <div id="bb-max-lift" style="font-size: 1.6em; font-weight: bold; text-align: center;">10kg</div>
                     </div>
-                    <div class="stat" style="background: var(--StatBg); padding: 10px; border-radius: 5px;">
-                        <div>Stamina Lvl:</div>
-                        <div class="stat-value" id="bb-stamina-level" style="font-weight: bold; font-size: 1.3em; margin-top: 5px;">1</div>
-                    </div>
-                </div>
-                
-                <div class="progress-container" style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>Stamina</span>
-                        <span id="bb-stamina-text" style="font-weight: bold;">0/100</span>
-                    </div>
-                    <div class="progress-bar" style="height: 20px; background: var(--BarBg); border-radius: 10px; overflow: hidden;">
-                        <div id="bb-stamina-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #4caf50 0%, #2e7d32 100%); transition: width 0.5s;"></div>
+                    
+                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 0.9em; margin-bottom: 5px;">Stamina Level</div>
+                        <div id="bb-stamina-level" style="font-size: 1.6em; font-weight: bold; text-align: center;">1</div>
                     </div>
                 </div>
                 
-                <div class="progress-container" style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>Muscle EXP</span>
-                        <span id="bb-muscle-text" style="font-weight: bold;">0/50</span>
-                    </div>
-                    <div class="progress-bar" style="height: 20px; background: var(--BarBg); border-radius: 10px; overflow: hidden;">
-                        <div id="bb-muscle-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #2196f3 0%, #0d47a1 100%); transition: width 0.5s;"></div>
+                <div class="progress-section" style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 5px;">Stamina: <span id="bb-stamina-text">80/100</span></h4>
+                    <div style="height: 20px; background: #34495e; border-radius: 10px; overflow: hidden;">
+                        <div id="bb-stamina-bar" style="height: 100%; width: 80%; background: #27ae60; transition: width 0.5s;"></div>
                     </div>
                 </div>
                 
-                <div id="bb-injury-warning" style="display: none; background: rgba(255, 100, 100, 0.2); padding: 10px; border-radius: 5px; margin-top: 10px; border-left: 3px solid #f44336; color: #ff6b6b; font-weight: bold; font-size: 0.9em;"></div>
+                <div class="progress-section" style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 5px;">Muscle EXP: <span id="bb-muscle-text">50/100</span></h4>
+                    <div style="height: 20px; background: #34495e; border-radius: 10px; overflow: hidden;">
+                        <div id="bb-muscle-bar" style="height: 100%; width: 50%; background: #3498db; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <div id="bb-injury-warning" style="padding: 10px; background: rgba(235, 77, 75, 0.2); border-radius: 5px; display: none; margin-top: 10px;">
+                    ⚠ Injury notification will appear here
+                </div>
             </div>
         `;
 
@@ -91,53 +96,97 @@ export class BodybuildingPanel {
         return panel;
     }
 
-    bindDragEvents() {
-        const header = this.domElement.querySelector('.header');
-        if (!header) return;
-        
-        // Store bound functions for proper removal later
-        this.onMouseDown = this.onMouseDown.bind(this);
-        this.onMouseMove = this.onMouseMove.bind(this);
-        this.onMouseUp = this.onMouseUp.bind(this);
-        
-        header.addEventListener('mousedown', this.onMouseDown);
+    makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = element.querySelector('.draggable-header');
+
+        if (header) {
+            header.onmousedown = dragMouseDown;
+        }
+
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
     }
 
-    onMouseDown(e) {
-        // Only start drag when clicking on header
-        const rect = this.domElement.getBoundingClientRect();
-        this.dragOffset = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
+    updateButtonStates() {
+        if (!this.domElement) return;
+        const activities = ['resting', 'cardio', 'training'];
         
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMouseUp);
+        activities.forEach(activity => {
+            const btn = this.domElement.querySelector(`button[data-activity="${activity}"]`);
+            if (btn) {
+                if (this.manager.state.activity === activity) {
+                    btn.style.backgroundColor = '#2ecc71';
+                    btn.style.fontWeight = 'bold';
+                } else {
+                    btn.style.backgroundColor = '#6082b6';
+                    btn.style.fontWeight = 'normal';
+                }
+            }
+        });
     }
 
-    onMouseMove(e) {
-        // Calculate new position
-        const x = e.clientX - this.dragOffset.x;
-        const y = e.clientY - this.dragOffset.y;
+    update() {
+        if (!this.domElement || !this.manager.character) return;
         
-        // Apply new position
-        this.domElement.style.left = `${x}px`;
-        this.domElement.style.top = `${y}px`;
+        // Update stats
+        this.domElement.querySelector('#bb-muscle-level').textContent = this.manager.state.muscleLevel;
+        this.domElement.querySelector('#bb-workout-weight').textContent = `${this.manager.state.workoutWeight}kg`;
+        this.domElement.querySelector('#bb-max-lift').textContent = `${this.manager.getMaxLift()}kg`;
+        this.domElement.querySelector('#bb-stamina-level').textContent = this.manager.state.staminaLevel;
+        
+        // Update bars
+        const progress = this.manager.getProgress();
+        this.domElement.querySelector('#bb-stamina-bar').style.width = `${progress.staminaPercent}%`;
+        this.domElement.querySelector('#bb-stamina-text').textContent = 
+            `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
+        
+        this.domElement.querySelector('#bb-muscle-bar').style.width = `${progress.muscleExpPercent}%`;
+        this.domElement.querySelector('#bb-muscle-text').textContent = 
+            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
+        
+        // Update injury
+        const warning = this.domElement.querySelector('#bb-injury-warning');
+        if (this.manager.state.injured) {
+            warning.textContent = `⚠ INJURY! ${this.manager.state.injuryDuration} days rest needed`;
+            warning.style.display = 'block';
+        } else {
+            warning.style.display = 'none';
+        }
+        
+        // Update buttons after data change
+        this.updateButtonStates();
     }
 
-    onMouseUp() {
-        // Cleanup mouse events
-        document.removeEventListener('mousemove', this.onMouseMove);
-        document.removeEventListener('mouseup', this.onMouseUp);
-    }
-
-    bindButtonEvents() {
+    bindEvents() {
         // Activity buttons
-        const activityButtons = this.domElement.querySelectorAll('.activity-btn');
-        activityButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
+        this.domElement.querySelectorAll('.activity-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.manager.setActivity(btn.dataset.activity);
-                this.updateActivityButtons(btn.dataset.activity);
+                this.updateButtonStates();
             });
         });
         
@@ -150,128 +199,27 @@ export class BodybuildingPanel {
         // Refresh button
         this.domElement.querySelector('#bb-refresh-btn').addEventListener('click', () => {
             this.manager.loadState();
-            toastr.info('Stats reloaded');
+            toastr.info('Bodybuilding stats reloaded');
             this.update();
         });
         
-        // Weight button
+        // Weight edit button
         this.domElement.querySelector('#bb-change-weight').addEventListener('click', () => {
-            this.showWeightDialog();
-        });
-    }
-
-    updateActivityButtons(activeActivity) {
-        const buttons = this.domElement.querySelectorAll('.activity-btn');
-        buttons.forEach(btn => {
-            const isActive = btn.dataset.activity === activeActivity;
-            btn.style.backgroundColor = isActive 
-                ? 'var(--ActivityActiveBg)' 
-                : 'var(--ActivityBtnBg)';
-            btn.style.color = isActive 
-                ? 'var(--ActivityActiveText)' 
-                : '';
-        });
-    }
-
-    showWeightDialog() {
-        const max = this.manager.getMaxLift();
-        const weight = prompt(`Set workout weight (max: ${max}kg)`, this.manager.state.workoutWeight);
-        if (weight !== null) {
-            const newWeight = parseFloat(weight);
-            if (!isNaN(newWeight)) {
-                this.manager.setWorkoutWeight(newWeight);
-                this.update();
+            const max = this.manager.getMaxLift();
+            const weight = prompt(`Set workout weight (max: ${max}kg)`, this.manager.state.workoutWeight);
+            if (weight !== null) {
+                const newWeight = parseFloat(weight);
+                if (!isNaN(newWeight)) {
+                    this.manager.setWorkoutWeight(newWeight);
+                    this.update();
+                }
             }
-        }
-    }
-
-    update() {
-        if (!this.domElement || !this.manager.character) return;
-        
-        const progress = this.manager.getProgress();
-        
-        // Update stats
-        this.domElement.querySelector('#bb-muscle-level').textContent = 
-            this.manager.state.muscleLevel;
-        
-        this.domElement.querySelector('#bb-workout-weight').textContent = 
-            `${this.manager.state.workoutWeight}kg`;
-        
-        this.domElement.querySelector('#bb-max-lift').textContent = 
-            `${this.manager.getMaxLift()}kg`;
-        
-        this.domElement.querySelector('#bb-stamina-level').textContent = 
-            this.manager.state.staminaLevel;
-        
-        // Update bars
-        this.domElement.querySelector('#bb-stamina-bar').style.width = 
-            `${progress.staminaPercent}%`;
-        this.domElement.querySelector('#bb-stamina-text').textContent = 
-            `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina()}`;
-        
-        this.domElement.querySelector('#bb-muscle-bar').style.width = 
-            `${progress.muscleExpPercent}%`;
-        this.domElement.querySelector('#bb-muscle-text').textContent = 
-            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle')}`;
-        
-        // Update activity buttons
-        this.updateActivityButtons(this.manager.state.activity);
-        
-        // Injury warning
-        const warning = this.domElement.querySelector('#bb-injury-warning');
-        if (this.manager.state.injured) {
-            warning.textContent = `⚠ INJURY: Rest required (${this.manager.state.injuryDuration}d)`;
-            warning.style.display = 'block';
-        } else {
-            warning.style.display = 'none';
-        }
-    }
-
-    attachStyleVars() {
-        document.documentElement.style.setProperty(
-            '--BodybuildingPanelBg', 
-            'var(--griffon-850, rgba(30, 31, 40, 0.95))'
-        );
-        document.documentElement.style.setProperty(
-            '--BodybuildingBorder', 
-            'var(--griffon-700, #404254)'
-        );
-        document.documentElement.style.setProperty(
-            '--BodybuildingText', 
-            'var(--griffon-100, #ece9f0)'
-        );
-        document.documentElement.style.setProperty(
-            '--StatBg', 
-            'var(--griffon-800, #2a2b36)'
-        );
-        document.documentElement.style.setProperty(
-            '--BarBg', 
-            'var(--griffon-700, rgba(255,255,255,0.1))'
-        );
-        document.documentElement.style.setProperty(
-            '--ActivityBtnBg', 
-            'var(--griffon-700, rgba(100, 102, 128, 0.5))'
-        );
-        document.documentElement.style.setProperty(
-            '--ActivityActiveBg', 
-            'var(--SmartThemeActiveSwitchColor, #25b87a)'
-        );
-        document.documentElement.style.setProperty(
-            '--ActivityActiveText', 
-            'var(--SmartThemeButtonTextColor, white)'
-        );
-    }
-
-    start() {
-        this.attachStyleVars();
-        this.bindDragEvents();
-        this.bindButtonEvents();
-        this.update();
+        });
     }
 
     updateCharacter(name) {
         if (!this.domElement) return;
-        const header = this.domElement.querySelector('.header h3');
+        const header = this.domElement.querySelector('.draggable-header span');
         if (header) header.textContent = `Bodybuilding: ${name}`;
         this.update();
     }
@@ -279,10 +227,17 @@ export class BodybuildingPanel {
     toggle() {
         if (!this.domElement) {
             this.domElement = this.createPanel();
-            this.start(); // Initialize events and styles
+            this.makeDraggable(this.domElement);
+            this.bindEvents();
+            this.update();
         }
+        
         this.isVisible = !this.isVisible;
         this.domElement.style.display = this.isVisible ? 'block' : 'none';
+        
+        if (this.isVisible && this.manager.character) {
+            this.update();
+        }
     }
 
     sendSystemMessage(message) {
