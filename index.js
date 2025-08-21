@@ -1,5 +1,5 @@
 import { getContext, extension_settings } from "../../../extensions.js";
-import { saveSettingsDebounced, SlashCommandParser, SlashCommand } from "../../../../script.js"; // Add SlashCommand imports
+import { saveSettingsDebounced } from "../../../../script.js";
 
 export const MODULE_NAME = 'bodybuilding_system';
 
@@ -12,29 +12,29 @@ function getCurrentCharacter() {
 
 function registerSlashCommand(panel) {
     try {
-        SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-            name: 'body',
-            callback: async (namedArgs, unnamedArgs) => {
-                const character = getCurrentCharacter();
-                if (!character) {
-                    toastr.info("Please select a character first");
-                    return;
-                }
-                panel.toggle();
-            },
-            returns: 'nothing',
-            description: 'Toggles bodybuilding system panel',
-            helpString: 'Opens/closes the bodybuilding management interface',
-            isDirect: true
-        }));
-        console.log("[BodybuildingSystem] Slash command '/body' registered successfully");
+        console.log("[BodybuildingSystem] Attempting to register /body command");
+        const { registerSlashCommand } = getContext();
+        
+        registerSlashCommand('body', async () => {
+            console.log("[BodybuildingSystem] /body command triggered");
+            const character = getCurrentCharacter();
+            if (!character) {
+                toastr.info("Please select a character first");
+                return;
+            }
+            panel.toggle();
+        }, [], 'Toggle bodybuilding system panel', true, true);
+        
+        console.log("[BodybuildingSystem] /body command registered successfully");
     } catch (error) {
-        console.error("[BodybuildingSystem] Failed to register slash command:", error);
+        console.error("[BodybuildingSystem] Failed to register command:", error);
     }
 }
 
 async function initializeExtension() {
     try {
+        console.log("[BodybuildingSystem] Initializing extension...");
+        
         const { BodybuildingManager } = await import("./src/BodybuildingManager.js");
         const { BodybuildingPanel } = await import("./src/BodybuildingPanel.js");
 
@@ -46,33 +46,45 @@ async function initializeExtension() {
                 const character = getCurrentCharacter();
                 if (!character) {
                     manager.setCharacter(null);
+                    console.log("[BodybuildingSystem] No character selected");
                     return;
                 }
                 manager.setCharacter(character);
                 panel.updateCharacter(character.name);
+                console.log(`[BodybuildingSystem] Updated character: ${character.name}`);
             } catch (error) {
-                console.error("Character update failed", error);
+                console.error("[BodybuildingSystem] Character update failed", error);
             }
         }
 
         function setupEventListeners() {
-            const { eventSource, event_types } = getContext();
+            try {
+                console.log("[BodybuildingSystem] Setting up event listeners");
+                const { eventSource, event_types } = getContext();
 
-            eventSource.on(event_types.CHAT_CHANGED, updateCharacter);
-            eventSource.on(event_types.CHARACTER_CHANGED, updateCharacter);
-            eventSource.on(event_types.APP_READY, updateCharacter);
+                eventSource.on(event_types.CHAT_CHANGED, updateCharacter);
+                eventSource.on(event_types.CHARACTER_CHANGED, updateCharacter);
+                eventSource.on(event_types.APP_READY, () => {
+                    console.log("[BodybuildingSystem] APP_READY received");
+                    updateCharacter();
+                });
 
-            eventSource.on(event_types.MESSAGE_RECEIVED, () => {
-                const character = getCurrentCharacter();
-                if (!character || !manager.state.enabled || manager.state.activity === 'idle') return;
-                
-                const sysMessage = manager.processActivity();
-                if (sysMessage && extension_settings[MODULE_NAME]?.enableSysMessages) {
-                    panel.sendSystemMessage(sysMessage);
-                }
-                
-                panel.updateIfVisible();
-            });
+                eventSource.on(event_types.MESSAGE_RECEIVED, () => {
+                    const character = getCurrentCharacter();
+                    if (!character || !manager.state.enabled || manager.state.activity === 'idle') return;
+                    
+                    const sysMessage = manager.processActivity();
+                    if (sysMessage && extension_settings[MODULE_NAME]?.enableSysMessages) {
+                        panel.sendSystemMessage(sysMessage);
+                    }
+                    
+                    panel.updateIfVisible();
+                });
+
+                console.log("[BodybuildingSystem] Event listeners set");
+            } catch (error) {
+                console.error("[BodybuildingSystem] Event setup failed", error);
+            }
         }
 
         function initSettings() {
@@ -80,6 +92,7 @@ async function initializeExtension() {
                 enableSysMessages: true,
                 riskOfInjury: true
             };
+            console.log("[BodybuildingSystem] Settings initialized");
         }
 
         function createSettingsUI() {
@@ -104,6 +117,7 @@ async function initializeExtension() {
             </div>`;
 
             $("#extensions_settings").append(settingsHtml);
+            console.log("[BodybuildingSystem] Settings UI added");
 
             $("#bb-sys-toggle").on("input", function() {
                 extension_settings[MODULE_NAME].enableSysMessages = $(this).prop('checked');
@@ -116,17 +130,23 @@ async function initializeExtension() {
             });
         }
 
+        // Initialize components in proper order
         initSettings();
-        registerSlashCommand(panel);
         setupEventListeners();
-        createSettingsUI();
+        registerSlashCommand(panel); // Register command BEFORE updateCharacter
         updateCharacter();
 
+        console.log("[BodybuildingSystem] Initialization complete");
     } catch (error) {
-        console.error("Bodybuilding init error", error);
+        console.error("[BodybuildingSystem] Init error", error);
     }
 }
 
-$(document).ready(() => {
-    initializeExtension();
+$(async () => {
+    console.log("[BodybuildingSystem] Document ready");
+    try {
+        await initializeExtension();
+    } catch (error) {
+        console.error("[BodybuildingSystem] Main initialization failed", error);
+    }
 });
