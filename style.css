@@ -151,3 +151,21 @@
     font-size: 0.85em;
     border: 1px solid #ff646440;
 }
+
+#bodybuilding-panel {
+    background: #1e1f28 !important;
+    border: 1px solid #404254 !important;
+    color: #ece9f0 !important;
+}
+
+#bodybuilding-panel .stat {
+    background: #2a2b36 !important;
+}
+
+#bodybuilding-panel .activity-btn {
+    background: #343541 !important;
+}
+
+#bodybuilding-panel .progress-bar {
+    background: rgba(255,255,255,0.1) !important;
+}
