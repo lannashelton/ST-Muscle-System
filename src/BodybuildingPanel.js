@@ -195,9 +195,15 @@ export class BodybuildingPanel {
         // Update injury message
         const warning = this.domElement.querySelector('#bb-injury-warning');
         if (this.manager.state.injured) {
-            warning.textContent = `⚠ INJURY! Rest for ${this.manager.state.injuryTurns} more turns`;
+            if (this.manager.state.injuryTurns > 0) {
+                warning.textContent = `⚠ INJURY! Rest for ${this.manager.state.injuryTurns} more turns`;
+            }
+            else {
+                warning.textContent = '⚠ INJURY RECOVERED';
+            }
             warning.style.display = 'block';
-        } else {
+        } 
+        else {
             warning.style.display = 'none';
         }
         
