@@ -90,7 +90,7 @@ export class BodybuildingPanel {
                     </div>
                 </div>
                 
-                <!-- Stamina EXP (NEW) -->
+                <!-- Stamina EXP -->
                 <div class="progress-section" style="margin-bottom: 15px;">
                     <div class="header" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">
                         <span>Stamina EXP:</span>
@@ -111,7 +111,6 @@ export class BodybuildingPanel {
         document.body.appendChild(panel);
         return panel;
     }
-
 
     makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -170,8 +169,9 @@ export class BodybuildingPanel {
         
         // Update stats
         this.domElement.querySelector('#bb-muscle-level').textContent = this.manager.state.muscleLevel;
+        const maxLift = this.manager.getMaxLift();
+        this.domElement.querySelector('#bb-max-lift').textContent = `${maxLift.toFixed(1)}kg`;
         this.domElement.querySelector('#bb-workout-weight').textContent = `${this.manager.state.workoutWeight}kg`;
-        this.domElement.querySelector('#bb-max-lift').textContent = `${this.manager.getMaxLift().toFixed(1)}kg`;
         this.domElement.querySelector('#bb-stamina-level').textContent = this.manager.state.staminaLevel;
         
         // Update progress bars
@@ -187,7 +187,7 @@ export class BodybuildingPanel {
         this.domElement.querySelector('#bb-muscle-exp-text').textContent = 
             `${this.manager.state.muscleExp.toFixed(1)}/${progress.muscleMax.toFixed(1)}`;
         
-        // Stamina EXP (NEW)
+        // Stamina EXP
         this.domElement.querySelector('#bb-stamina-exp-bar').style.width = `${progress.staminaExpPercent}%`;
         this.domElement.querySelector('#bb-stamina-exp-text').textContent = 
             `${this.manager.state.staminaExp.toFixed(1)}/${progress.staminaMax.toFixed(1)}`;
@@ -195,7 +195,7 @@ export class BodybuildingPanel {
         // Update injury message
         const warning = this.domElement.querySelector('#bb-injury-warning');
         if (this.manager.state.injured) {
-            warning.textContent = `⚠ INJURY! ${this.manager.state.injuryDuration} days rest needed`;
+            warning.textContent = `⚠ INJURY! Rest for ${this.manager.state.injuryTurns} more turns`;
             warning.style.display = 'block';
         } else {
             warning.style.display = 'none';
@@ -204,7 +204,6 @@ export class BodybuildingPanel {
         // Update activity buttons
         this.updateButtonStates();
     }
-
 
     bindEvents() {
         // Activity buttons
@@ -245,7 +244,7 @@ export class BodybuildingPanel {
 
     updateCharacter(name) {
         if (!this.domElement) return;
-        const header = this.domElement.querySelector('.draggable-header span');
+        const header = this.domElement.querySelector('.draggable-header h3');
         if (header) header.textContent = `Bodybuilding: ${name}`;
         this.update();
     }
@@ -273,13 +272,24 @@ export class BodybuildingPanel {
     }
 
     sendSystemMessage(message) {
-        const input = document.getElementById('send_textarea');
-        if (!input) return;
-        
-        input.value = `/sys ${message}`;
-        input.dispatchEvent(new KeyboardEvent('keydown', {
-            key: 'Enter',
-            bubbles: true
-        }));
+        try {
+            const chatInput = document.getElementById('send_textarea');
+            if (!chatInput) return;
+            
+            chatInput.value = `/sys ${message}`;
+            
+            const sendButton = document.querySelector('#send_but');
+            if (sendButton) {
+                sendButton.click();
+            } else {
+                chatInput.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    code: 'Enter',
+                    bubbles: true
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to send system message:", error);
+        }
     }
 }
