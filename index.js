@@ -33,8 +33,11 @@ async function initializeExtension() {
         function updateCharacter() {
             try {
                 const character = getCurrentCharacter();
+                if (!character) {
+                    return;
+                }
                 manager.setCharacter(character);
-                if (character) panel.updateCharacter(character.name);
+                panel.updateCharacter(character.name);
             } catch (error) {
                 console.error("Character update failed", error);
             }
@@ -47,12 +50,13 @@ async function initializeExtension() {
             eventSource.on(event_types.CHARACTER_CHANGED, updateCharacter);
             eventSource.on(event_types.APP_READY, updateCharacter);
 
+            // Process activities after character messages
             eventSource.on(event_types.MESSAGE_RECEIVED, () => {
                 const character = getCurrentCharacter();
                 if (!character || manager.state.activity === 'idle') return;
                 
                 const sysMessage = manager.processActivity();
-                console.debug(`[Bodybuilding] Activity processed: ${sysMessage || "No message"}`);
+                console.debug(`[Bodybuilding] Processing activity: ${sysMessage || "No message"}`);
                 
                 if (sysMessage && extension_settings[MODULE_NAME]?.enableSysMessages) {
                     panel.sendSystemMessage(sysMessage);
