@@ -14,82 +14,95 @@ export class BodybuildingPanel {
             top: 150px;
             right: 20px;
             width: 320px;
-            background: var(--MenuItemBg);
-            border: 1px solid var(--MenuItemBorder);
-            border-radius: 10px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: 1px solid #3a6fca;
+            border-radius: 12px;
             padding: 15px;
             z-index: 100;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             display: none;
             user-select: none;
+            color: #ffffff;
         `;
 
         panel.innerHTML = `
-            <div class="draggable-header" style="cursor: move; padding-bottom: 10px; border-bottom: 1px solid var(--MenuItemBorder); margin-bottom: 15px;">
-                <h3 style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Bodybuilding System</span>
-                    <div>
-                        <span id="bb-refresh-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">↻</span>
-                        <span id="bb-close-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">×</span>
-                    </div>
-                </h3>
+            <div class="draggable-header" style="cursor: move; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">Bodybuilding System</h3>
+                <div>
+                    <span id="bb-refresh-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">↻</span>
+                    <span id="bb-close-btn" style="cursor: pointer; margin-left: 10px; font-size: 1.2em;">×</span>
+                </div>
             </div>
             <div class="content">
-                <div class="activity-selector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
-                    <button data-activity="idle" class="activity-btn" 
-                            style="padding: 10px; border: none; border-radius: 8px; 
-                                   background: #6082b6; color: white; cursor: pointer;">Idle</button>
-                    <button data-activity="resting" class="activity-btn" 
-                            style="padding: 10px; border: none; border-radius: 8px; 
-                                   background: #6082b6; color: white; cursor: pointer;">Resting</button>
-                    <button data-activity="cardio" class="activity-btn" 
-                            style="padding: 10px; border: none; border-radius: 8px; 
-                                   background: #6082b6; color: white; cursor: pointer;">Cardio</button>
-                    <button data-activity="training" class="activity-btn" 
-                            style="padding: 10px; border: none; border-radius: 8px; 
-                                   background: #6082b6; color: white; cursor: pointer;">Training</button>
+                <div class="activity-selector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px;">
+                    <button data-activity="idle" class="activity-btn">Idle</button>
+                    <button data-activity="resting" class="activity-btn">Resting</button>
+                    <button data-activity="cardio" class="activity-btn">Cardio</button>
+                    <button data-activity="training" class="activity-btn">Training</button>
                 </div>
                 
-                <div class="stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
-                        <div style="font-size: 0.9em; margin-bottom: 5px;">Muscle Level</div>
-                        <div id="bb-muscle-level" style="font-size: 1.6em; font-weight: bold; text-align: center;">1</div>
+                <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="stat-card" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center;">
+                        <div class="title" style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Muscle Level</div>
+                        <div id="bb-muscle-level" class="value" style="font-size: 1.4em; font-weight: bold; color: #62b4ff;">1</div>
                     </div>
                     
-                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
+                    <div class="stat-card" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center;">
                         <div style="display: flex; justify-content: space-between;">
-                            <div style="font-size: 0.9em;">Workout Weight</div>
-                            <button id="bb-change-weight" style="background: none; border: none; cursor: pointer; color: white;">✏️</button>
+                            <div class="title" style="font-size: 0.85em; opacity: 0.9;">Workout Weight</div>
+                            <button id="bb-change-weight" style="background: none; border: none; color: #62b4ff; cursor: pointer; font-size: 1em; margin-left: 5px;">✏️</button>
                         </div>
-                        <div id="bb-workout-weight" style="font-size: 1.6em; font-weight: bold; text-align: center;">10kg</div>
+                        <div id="bb-workout-weight" class="value" style="font-size: 1.4em; font-weight: bold; color: #62b4ff;">10kg</div>
                     </div>
                     
-                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
-                        <div style="font-size: 0.9em; margin-bottom: 5px;">Max Lift</div>
-                        <div id="bb-max-lift" style="font-size: 1.6em; font-weight: bold; text-align: center;">10kg</div>
+                    <div class="stat-card" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center;">
+                        <div class="title" style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Max Lift</div>
+                        <div id="bb-max-lift" class="value" style="font-size: 1.4em; font-weight: bold; color: #62b4ff;">10kg</div>
                     </div>
                     
-                    <div class="stat" style="background: #2c3e50; padding: 10px; border-radius: 8px;">
-                        <div style="font-size: 0.9em; margin-bottom: 5px;">Stamina Level</div>
-                        <div id="bb-stamina-level" style="font-size: 1.6em; font-weight: bold; text-align: center;">1</div>
+                    <div class="stat-card" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center;">
+                        <div class="title" style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Stamina Level</div>
+                        <div id="bb-stamina-level" class="value" style="font-size: 1.4em; font-weight: bold; color: #62b4ff;">1</div>
                     </div>
                 </div>
                 
-                <div class="progress-section" style="margin-bottom: 20px;">
-                    <h4 style="margin-bottom: 5px;">Stamina: <span id="bb-stamina-text">80/100</span></h4>
-                    <div style="height: 20px; background: #34495e; border-radius: 10px; overflow: hidden;">
-                        <div id="bb-stamina-bar" style="height: 100%; width: 80%; background: #27ae60; transition: width 0.5s;"></div>
+                <!-- Current Stamina -->
+                <div class="progress-section" style="margin-bottom: 15px;">
+                    <div class="header" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">
+                        <span>Stamina:</span>
+                        <span id="bb-stamina-text">80/100</span>
+                    </div>
+                    <div class="progress-container" style="height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; position: relative;">
+                        <div id="bb-stamina-bar" class="progress-fill" style="background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);"></div>
+                        <div class="progress-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.7);"></div>
                     </div>
                 </div>
                 
-                <div class="progress-section" style="margin-bottom: 20px;">
-                    <h4 style="margin-bottom: 5px;">Muscle EXP: <span id="bb-muscle-text">50/100</span></h4>
-                    <div style="height: 20px; background: #34495e; border-radius: 10px; overflow: hidden;">
-                        <div id="bb-muscle-bar" style="height: 100%; width: 50%; background: #3498db; transition: width 0.5s;"></div>
+                <!-- Muscle EXP -->
+                <div class="progress-section" style="margin-bottom: 15px;">
+                    <div class="header" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">
+                        <span>Muscle EXP:</span>
+                        <span id="bb-muscle-exp-text">0/100</span>
+                    </div>
+                    <div class="progress-container" style="height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; position: relative;">
+                        <div id="bb-muscle-bar" class="progress-fill" style="background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%);"></div>
+                        <div class="progress-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.7);"></div>
                     </div>
                 </div>
                 
-                <div id="bb-injury-warning" style="padding: 10px; background: rgba(235, 77, 75, 0.2); border-radius: 5px; display: none; margin-top: 10px;">
+                <!-- Stamina EXP (NEW) -->
+                <div class="progress-section" style="margin-bottom: 15px;">
+                    <div class="header" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">
+                        <span>Stamina EXP:</span>
+                        <span id="bb-stamina-exp-text">0/100</span>
+                    </div>
+                    <div class="progress-container" style="height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; position: relative;">
+                        <div id="bb-stamina-exp-bar" class="progress-fill" style="background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%);"></div>
+                        <div class="progress-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.7);"></div>
+                    </div>
+                </div>
+                
+                <div id="bb-injury-warning" style="display: block; padding: 10px; background: rgba(229, 57, 53, 0.3); border-radius: 8px; margin-top: 15px; border-left: 3px solid #e53935; font-weight: bold; text-align: center; display: none;">
                     ⚠ Injury notification will appear here
                 </div>
             </div>
@@ -98,6 +111,7 @@ export class BodybuildingPanel {
         document.body.appendChild(panel);
         return panel;
     }
+
 
     makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -141,11 +155,11 @@ export class BodybuildingPanel {
             const btn = this.domElement.querySelector(`button[data-activity="${activity}"]`);
             if (btn) {
                 if (this.manager.state.activity === activity) {
-                    btn.style.backgroundColor = '#2ecc71';
-                    btn.style.fontWeight = 'bold';
+                    btn.style.backgroundColor = 'rgba(46, 204, 113, 0.8)';
+                    btn.style.boxShadow = '0 0 10px rgba(46, 204, 113, 0.5)';
                 } else {
-                    btn.style.backgroundColor = '#6082b6';
-                    btn.style.fontWeight = 'normal';
+                    btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                    btn.style.boxShadow = 'none';
                 }
             }
         });
@@ -160,17 +174,25 @@ export class BodybuildingPanel {
         this.domElement.querySelector('#bb-max-lift').textContent = `${this.manager.getMaxLift().toFixed(1)}kg`;
         this.domElement.querySelector('#bb-stamina-level').textContent = this.manager.state.staminaLevel;
         
-        // Update bars
+        // Update progress bars
         const progress = this.manager.getProgress();
+        
+        // Stamina current
         this.domElement.querySelector('#bb-stamina-bar').style.width = `${progress.staminaPercent}%`;
         this.domElement.querySelector('#bb-stamina-text').textContent = 
             `${this.manager.state.currentStamina.toFixed(1)}/${this.manager.getMaxStamina().toFixed(1)}`;
         
+        // Muscle EXP
         this.domElement.querySelector('#bb-muscle-bar').style.width = `${progress.muscleExpPercent}%`;
-        this.domElement.querySelector('#bb-muscle-text').textContent = 
-            `${this.manager.state.muscleExp.toFixed(1)}/${this.manager.getRequiredExp('muscle').toFixed(1)}`;
+        this.domElement.querySelector('#bb-muscle-exp-text').textContent = 
+            `${this.manager.state.muscleExp.toFixed(1)}/${progress.muscleMax.toFixed(1)}`;
         
-        // Update injury
+        // Stamina EXP (NEW)
+        this.domElement.querySelector('#bb-stamina-exp-bar').style.width = `${progress.staminaExpPercent}%`;
+        this.domElement.querySelector('#bb-stamina-exp-text').textContent = 
+            `${this.manager.state.staminaExp.toFixed(1)}/${progress.staminaMax.toFixed(1)}`;
+        
+        // Update injury message
         const warning = this.domElement.querySelector('#bb-injury-warning');
         if (this.manager.state.injured) {
             warning.textContent = `⚠ INJURY! ${this.manager.state.injuryDuration} days rest needed`;
@@ -179,9 +201,10 @@ export class BodybuildingPanel {
             warning.style.display = 'none';
         }
         
-        // Update buttons after data change
+        // Update activity buttons
         this.updateButtonStates();
     }
+
 
     bindEvents() {
         // Activity buttons
