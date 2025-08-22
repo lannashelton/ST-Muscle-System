@@ -1,6 +1,6 @@
-import { getContext, extension_settings } from "../../../extensions.js";
-import { saveSettingsDebounced } from "../../../../script.js";
-import { registerSlashCommand } from "../../../slash-commands.js"; // Add this import
+import { getContext, extension_settings } from "../../extensions.js";
+import { saveSettingsDebounced, SlashCommandParser, SlashCommand, ARGUMENT_TYPE } from "../../../script.js";
+import { toastr } from "../../../toast.js";
 
 export const MODULE_NAME = 'bodybuilding_system';
 
@@ -11,20 +11,33 @@ function getCurrentCharacter() {
     return context.characters[context.characterId] || null;
 }
 
-function registerBodybuildingCommand(panel) {
-    registerSlashCommand('muscle', async () => {
-        const character = getCurrentCharacter();
-        if (!character) {
-            toastr.info("Please select a character first");
-            return;
-        }
-        panel.toggle();
-    }, [], 'Toggle bodybuilding system panel', true, true);
-    console.log("[BodybuildingSystem] Slash command '/muscle' registered successfully");
+function registerSlashCommand(panel) {
+    try {
+        // Use the new slash command registration method
+        SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+            name: 'body',
+            callback: async (namedArgs, unnamedArgs) => {
+                const character = getCurrentCharacter();
+                if (!character) {
+                    toastr.info("Please select a character first");
+                    return;
+                }
+                panel.toggle();
+            },
+            returns: 'nothing',
+            description: 'Toggles bodybuilding system panel',
+            helpString: 'Opens/closes the bodybuilding management interface',
+            isDirect: true
+        }));
+        console.log("[BodybuildingSystem] Slash command '/body' registered");
+    } catch (e) {
+        console.error("[BodybuildingSystem] Slash command registration failed", e);
+    }
 }
 
 async function initializeExtension() {
     try {
+        console.log("[BodybuildingSystem] Initializing extension...");
         const { BodybuildingManager } = await import("./src/BodybuildingManager.js");
         const { BodybuildingPanel } = await import("./src/BodybuildingPanel.js");
 
@@ -73,50 +86,72 @@ async function initializeExtension() {
         }
 
         function createSettingsUI() {
-            const settingsHtml = `
-            <div class="bodybuilding-extension-settings">
-                <div class="inline-drawer">
-                    <div class="inline-drawer-toggle inline-drawer-header">
-                        <b>Bodybuilding Settings</b>
-                        <div class="inline-drawer-icon down"></div>
-                    </div>
-                    <div class="inline-drawer-content">
-                        <div class="flex-container" style="margin-bottom: 10px;">
-                            <label for="bb-sys-toggle" style="flex-grow: 1;">System messages</label>
-                            <input type="checkbox" id="bb-sys-toggle" ${extension_settings[MODULE_NAME].enableSysMessages ? 'checked' : ''}>
+            try {
+                const settingsHtml = `
+                <div class="bodybuilding-extension-settings">
+                    <div class="inline-drawer">
+                        <div class="inline-drawer-toggle inline-drawer-header">
+                            <b>Bodybuilding Settings</b>
+                            <div class="inline-drawer-icon down"></div>
                         </div>
-                        <div class="flex-container">
-                            <label for="bb-injury-toggle" style="flex-grow: 1;">Injury risk</label>
-                            <input type="checkbox" id="bb-injury-toggle" ${extension_settings[MODULE_NAME].riskOfInjury ? 'checked' : ''}>
+                        <div class="inline-drawer-content">
+                            <div class="flex-container" style="margin-bottom: 10px;">
+                                <label for="bb-sys-toggle" style="flex-grow: 1;">System messages</label>
+                                <input type="checkbox" id="bb-sys-toggle" ${extension_settings[MODULE_NAME].enableSysMessages ? 'checked' : ''}>
+                            </div>
+                            <div class="flex-container">
+                                <label for="bb-injury-toggle" style="flex-grow: 1;">Injury risk</label>
+                                <input type="checkbox" id="bb-injury-toggle" ${extension_settings[MODULE_NAME].riskOfInjury ? 'checked' : ''}>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
 
-            $("#extensions_settings").append(settingsHtml);
+                const $settingsContainer = $("#extensions_settings");
+                if ($settingsContainer.length) {
+                    // Remove any existing instance
+                    $settingsContainer.find(".bodybuilding-extension-settings").remove();
+                    $settingsContainer.append(settingsHtml);
 
-            $("#bb-sys-toggle").on("input", function() {
-                extension_settings[MODULE_NAME].enableSysMessages = $(this).prop('checked');
-                saveSettingsDebounced();
-            });
+                    $("#bb-sys-toggle").on("input", function() {
+                        extension_settings[MODULE_NAME].enableSysMessages = $(this).prop('checked');
+                        saveSettingsDebounced();
+                    });
 
-            $("#bb-injury-toggle").on("input", function() {
-                extension_settings[MODULE_NAME].riskOfInjury = $(this).prop('checked');
-                saveSettingsDebounced();
-            });
+                    $("#bb-injury-toggle").on("input", function() {
+                        extension_settings[MODULE_NAME].riskOfInjury = $(this).prop('checked');
+                        saveSettingsDebounced();
+                    });
+                    
+                    console.log("[BodybuildingSystem] Settings UI loaded");
+                } else {
+                    console.error("[BodybuildingSystem] Settings container not found");
+                }
+            } catch (e) {
+                console.error("[BodybuildingSystem] Failed to create settings UI", e);
+            }
         }
 
         initSettings();
-        registerBodybuildingCommand(panel); // Updated call
+        registerSlashCommand(panel);
         setupEventListeners();
         createSettingsUI();
         updateCharacter();
 
+        console.log("[BodybuildingSystem] Initialization complete");
+
     } catch (error) {
         console.error("Bodybuilding init error", error);
+        toastr.error("Bodybuilding system failed to initialize", "Extension Error");
     }
 }
 
-$(document).ready(() => {
-    initializeExtension();
-});
+// Ensure jQuery is available
+if (window.jQuery) {
+    $(initializeExtension);
+} else {
+    console.error("[BodybuildingSystem] jQuery not available yet. Waiting...");
+    window.addEventListener('DOMContentLoaded', () => {
+        $(initializeExtension);
+    });
+}
