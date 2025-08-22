@@ -6,7 +6,6 @@ export class BodybuildingManager {
         this.activities = ['idle', 'resting', 'cardio', 'training'];
         this.character = null;
         this.state = {
-            enabled: false,
             activity: 'idle',
             muscleLevel: 1,
             muscleExp: 0,
@@ -17,10 +16,6 @@ export class BodybuildingManager {
             injured: false,
             injuryDuration: 0
         };
-
-        // Bind methods for event handlers
-        this.addStaminaExp = this.addStaminaExp.bind(this);
-        this.addMuscleExp = this.addMuscleExp.bind(this);
     }
 
     setCharacter(character) {
@@ -38,15 +33,11 @@ export class BodybuildingManager {
         const varName = this.getVarName(key);
         if (!varName) return asString ? '' : 0;
         
-        // First check window object
-        if (window[varName] !== undefined) {
-            return asString ? String(window[varName]) : parseFloat(window[varName]);
-        }
-        
-        // Then check extension_settings
+        // Simplified storage check
         if (extension_settings.variables?.global?.[varName] !== undefined) {
-            return asString ? String(extension_settings.variables.global[varName]) 
-                           : parseFloat(extension_settings.variables.global[varName]);
+            return asString ? 
+                String(extension_settings.variables.global[varName]) : 
+                parseFloat(extension_settings.variables.global[varName]);
         }
         
         return asString ? '' : 0;
@@ -56,36 +47,18 @@ export class BodybuildingManager {
         const varName = this.getVarName(key);
         if (!varName) return;
         
-        // Update window variable
-        window[varName] = value;
-        
-        // Update persistent settings
+        // Initialize if needed
         if (!extension_settings.variables) {
             extension_settings.variables = { global: {} };
         }
+        
         extension_settings.variables.global[varName] = value;
         saveSettingsDebounced();
-    }
-
-    enableSystem() {
-        this.state.enabled = true;
-        if (this.state.currentStamina <= 0) {
-            this.state.currentStamina = this.getMaxStamina();
-        }
-        this.saveState();
-        return `Bodybuilding system activated for ${this.character.name}`;
-    }
-
-    disableSystem() {
-        this.state.enabled = false;
-        this.saveState();
-        return `Bodybuilding system disabled for ${this.character.name}`;
     }
 
     loadState() {
         if (!this.character) return;
         
-        this.state.enabled = Boolean(this.getGlobalVariable('enabled'));
         this.state.activity = this.getGlobalVariable('activity', true) || 'idle';
         this.state.muscleLevel = parseInt(this.getGlobalVariable('muscle_level')) || 1;
         this.state.muscleExp = parseFloat(this.getGlobalVariable('muscle_exp')) || 0;
@@ -107,7 +80,6 @@ export class BodybuildingManager {
     saveState() {
         if (!this.character) return;
         
-        this.setGlobalVariable('enabled', this.state.enabled ? 1 : 0);
         this.setGlobalVariable('activity', this.state.activity);
         this.setGlobalVariable('muscle_level', this.state.muscleLevel);
         this.setGlobalVariable('muscle_exp', this.state.muscleExp);
@@ -120,19 +92,19 @@ export class BodybuildingManager {
     }
     
     getMaxLift() {
-        // Exponential growth: 20% increase per level
-        return 10 * Math.pow(1.2, this.state.muscleLevel - 1);
+        // Calculate based on muscle level (exponential scaling)
+        return 10 * Math.pow(1.25, this.state.muscleLevel - 1);
     }
     
     getMaxStamina() {
-        // 15% increase per level
-        return 100 * Math.pow(1.15, this.state.staminaLevel - 1);
+        // Calculate based on stamina level
+        return 100 * Math.pow(1.2, this.state.staminaLevel - 1);
     }
     
     getRequiredExp(type) {
-        // Base requirement * level squared for exponential difficulty
-        const base = type === 'muscle' ? 50 : 30;
-        return base * Math.pow(this.state[type + 'Level'], 1.5);
+        // Base requirement * level^2 for exponential difficulty
+        const base = type === 'muscle' ? 100 : 80;
+        return base * Math.pow(this.state[type + 'Level'], 2);
     }
 
     getProgress() {
@@ -140,18 +112,21 @@ export class BodybuildingManager {
         const staminaPercent = (this.state.currentStamina / maxStamina) * 100;
         const muscleMax = this.getRequiredExp('muscle');
         const muscleExpPercent = (this.state.muscleExp / muscleMax) * 100;
+        const staminaMax = this.getRequiredExp('stamina');
+        const staminaExpPercent = (this.state.staminaExp / staminaMax) * 100;
         
         return {
             staminaPercent,
             muscleExpPercent,
-            staminaMax: maxStamina,
+            staminaExpPercent,
+            staminaMax,
             muscleMax
         };
     }
     
     // Core logic for processing character activities
     processActivity() {
-        if (!this.state.enabled || !this.character) return null;
+        if (!this.character) return null;
         
         if (this.state.injured) {
             return this.processInjury();
@@ -185,18 +160,17 @@ export class BodybuildingManager {
     }
     
     processCardio() {
-        const cost = 15;
+        const cost = 20;
         if (this.state.currentStamina < cost) {
             this.state.currentStamina = 0;
+            this.saveState();
             return `${this.character.name} is too exhausted for cardio!`;
         }
         
-        this.state.currentStamina -= cost;
-        this.addStaminaExp(0.5);
+        this.state.currentStamina = Math.max(0, this.state.currentStamina - cost);
+        this.addStaminaExp(0.8);  // Gain stamina EXP
         
-        if (this.state.currentStamina < 0) this.state.currentStamina = 0;
         this.saveState();
-        
         return `${this.character.name} performed cardio and gained stamina experience`;
     }
     
@@ -204,13 +178,14 @@ export class BodybuildingManager {
         const maxLift = this.getMaxLift();
         const weight = this.state.workoutWeight;
         
+        // Can't lift more than max capacity
         if (weight > maxLift) {
             return `${this.character.name} can't lift ${weight.toFixed(1)}kg (max: ${maxLift.toFixed(1)}kg)`;
         }
         
-        // Calculate stamina cost based on weight intensity
-        const baseCost = 20;
+        // Calculate cost based on weight intensity (20-50 stamina)
         const intensity = weight / maxLift;
+        const baseCost = 20;
         const staminaCost = baseCost + (intensity * 30);
         
         if (this.state.currentStamina < staminaCost) {
@@ -219,29 +194,29 @@ export class BodybuildingManager {
             return `${this.character.name} is too exhausted to train!`;
         }
         
-        this.state.currentStamina -= staminaCost;
-        let exp = 8 + (weight * 0.4);
+        this.state.currentStamina = Math.max(0, this.state.currentStamina - staminaCost);
         
-        // Bonus for hard training with injury risk
+        // Gain muscle exp based on intensity (+ random variation)
+        const exp = 10 + (weight * intensity) + (Math.random() * 5);
+        this.addMuscleExp(exp);
+        
+        // Injury chance at high intensities
         if (intensity > 0.85 && extension_settings.bodybuilding_system?.riskOfInjury) {
-            exp *= 1.6;
-            if (Math.random() < 0.15) { // 15% injury chance at high intensity
+            if (Math.random() < 0.15) {
                 this.state.injured = true;
-                this.state.injuryDuration = 3;
+                this.state.injuryDuration = 2 + Math.floor(Math.random() * 3); // 2-4 days
                 this.saveState();
-                return `${this.character.name} was injured while lifting ${weight.toFixed(1)}kg!`;
+                return `${this.character.name} was injured while lifting ${weight}kg!`;
             }
         }
         
-        this.addMuscleExp(exp);
-        if (this.state.currentStamina < 0) this.state.currentStamina = 0;
         this.saveState();
-        
-        return `${this.character.name} lifted ${weight.toFixed(1)}kg and gained muscle experience`;
+        return `${this.character.name} lifted ${weight}kg and gained muscle experience`;
     }
     
     processInjury() {
         this.state.injuryDuration--;
+        
         if (this.state.injuryDuration <= 0) {
             this.state.injured = false;
             this.state.injuryDuration = 0;
@@ -257,15 +232,10 @@ export class BodybuildingManager {
         this.state.muscleExp += amount;
         const required = this.getRequiredExp('muscle');
         
-        // Level up muscle if enough exp
-        while (this.state.muscleExp >= required && this.state.muscleLevel < 10) {
+        // Level up muscle
+        while (this.state.muscleExp >= required) {
             this.state.muscleLevel++;
             this.state.muscleExp -= required;
-        }
-        
-        // Cap at max level
-        if (this.state.muscleLevel >= 10) {
-            this.state.muscleExp = Math.min(this.state.muscleExp, required);
         }
     }
     
@@ -273,16 +243,12 @@ export class BodybuildingManager {
         this.state.staminaExp += amount;
         const required = this.getRequiredExp('stamina');
         
-        // Level up stamina if enough exp
-        while (this.state.staminaExp >= required && this.state.staminaLevel < 10) {
+        // Level up stamina
+        while (this.state.staminaExp >= required) {
             this.state.staminaLevel++;
             this.state.staminaExp -= required;
+            // Refill stamina on level up
             this.state.currentStamina = this.getMaxStamina();
-        }
-        
-        // Cap at max level
-        if (this.state.staminaLevel >= 10) {
-            this.state.staminaExp = Math.min(this.state.staminaExp, required);
         }
     }
     
