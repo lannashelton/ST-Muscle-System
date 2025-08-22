@@ -10,18 +10,6 @@ function getCurrentCharacter() {
     return context.characters[context.characterId] || null;
 }
 
-function registerSlashCommand(panel) {
-    const context = getContext();
-    context.registerSlashCommand('body', async () => {
-        const character = getCurrentCharacter();
-        if (!character) {
-            toastr.info("Please select a character first");
-            return;
-        }
-        panel.toggle();
-    }, [], 'Toggle bodybuilding system panel', true, true);
-}
-
 async function initializeExtension() {
     try {
         const { BodybuildingManager } = await import("./src/BodybuildingManager.js");
@@ -30,15 +18,23 @@ async function initializeExtension() {
         const manager = new BodybuildingManager();
         const panel = new BodybuildingPanel(manager);
 
+        function registerSlashCommand() {
+            const context = getContext();
+            context.registerSlashCommand('body', async () => {
+                const character = getCurrentCharacter();
+                if (!character) {
+                    toastr.info("Please select a character first");
+                    return;
+                }
+                panel.toggle();
+            }, [], 'Toggle bodybuilding system panel', true, true);
+        }
+
         function updateCharacter() {
             try {
                 const character = getCurrentCharacter();
-                if (!character) {
-                    manager.setCharacter(null);
-                    return;
-                }
                 manager.setCharacter(character);
-                panel.updateCharacter(character.name);
+                if (character) panel.updateCharacter(character.name);
             } catch (error) {
                 console.error("Character update failed", error);
             }
@@ -53,9 +49,11 @@ async function initializeExtension() {
 
             eventSource.on(event_types.MESSAGE_RECEIVED, () => {
                 const character = getCurrentCharacter();
-                if (!character || !manager.state.enabled || manager.state.activity === 'idle') return;
+                if (!character || manager.state.activity === 'idle') return;
                 
                 const sysMessage = manager.processActivity();
+                console.debug(`[Bodybuilding] Activity processed: ${sysMessage || "No message"}`);
+                
                 if (sysMessage && extension_settings[MODULE_NAME]?.enableSysMessages) {
                     panel.sendSystemMessage(sysMessage);
                 }
@@ -106,7 +104,7 @@ async function initializeExtension() {
         }
 
         initSettings();
-        registerSlashCommand(panel);
+        registerSlashCommand();
         setupEventListeners();
         createSettingsUI();
         updateCharacter();
