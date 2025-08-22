@@ -168,3 +168,15 @@
     font-weight: bold;
     text-align: center;
 }
+
+/* Add pulsing animation for close call message */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+#bodybuilding-panel .activity-btn.warning {
+    animation: pulse 1s infinite;
+    border: 1px solid #ff9800;
+}
