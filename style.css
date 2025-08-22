@@ -57,8 +57,8 @@
 }
 
 .activity-btn.active {
-    background: rgba(46, 204, 113, 0.8);
-    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    background: rgba(46, 204, 113, 0.8) !important;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5) !important;
     color: #fff;
 }
 
@@ -138,6 +138,10 @@
 
 #bb-muscle-bar {
     background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%);
+}
+
+#bb-stamina-exp-bar {
+    background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%) !important;
 }
 
 .progress-text {
