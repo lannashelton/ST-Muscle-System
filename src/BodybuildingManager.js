@@ -144,19 +144,36 @@ export class BodybuildingManager {
     
     processResting() {
         const maxStamina = this.getMaxStamina();
-        const recovery = maxStamina * 0.1;
         
+        // Skip if already at max stamina
+        if (this.state.currentStamina >= maxStamina) {
+            return null;
+        }
+        
+        const recovery = maxStamina * 0.1;
+        const oldValue = this.state.currentStamina;
         this.state.currentStamina = Math.min(
             maxStamina,
-            this.state.currentStamina + recovery
+            oldValue + recovery
         );
         
-        this.saveState();
-        return `${this.character.name} rested and recovered ${recovery.toFixed(1)} stamina`;
+        // Only show message if stamina actually increased
+        if (this.state.currentStamina != oldValue) {
+            this.saveState();
+            return `${this.character.name} rested and recovered ${recovery.toFixed(1)} stamina`;
+        }
+        
+        return null;
     }
     
     processCardio() {
+        // Allow cardio while injured but limit effectiveness
+        if (this.state.injured) {
+            return `${this.character.name} performs light cardio while recovering`;
+        }
+
         const cost = 20;
+        
         if (this.state.currentStamina < cost) {
             this.state.currentStamina = 0;
             this.saveState();
@@ -164,10 +181,10 @@ export class BodybuildingManager {
         }
         
         this.state.currentStamina = Math.max(0, this.state.currentStamina - cost);
-        this.addStaminaExp(0.8); // Gain stamina EXP
+        this.addStaminaExp(0.8);
         
         this.saveState();
-        return `${this.character.name} performed cardio and gained stamina experience`;
+        return `${this.character.name} gained stamina experience from cardio`;
     }
     
     processTraining() {
@@ -177,14 +194,12 @@ export class BodybuildingManager {
 
         const maxLift = this.getMaxLift();
         const weight = this.state.workoutWeight;
-        const injuryThreshold = maxLift * 0.95; // 95% of max lift
+        const injuryThreshold = maxLift * 0.95; 
         
-        // Can't lift more than max capacity
         if (weight > maxLift) {
             return `${this.character.name} can't lift ${weight.toFixed(1)}kg (max: ${maxLift.toFixed(1)}kg)`;
         }
         
-        // Calculate cost based on weight intensity
         const intensity = weight / maxLift;
         const baseCost = 20;
         const staminaCost = baseCost + (intensity * 30);
@@ -196,23 +211,28 @@ export class BodybuildingManager {
         }
         
         this.state.currentStamina = Math.max(0, this.state.currentStamina - staminaCost);
-        
+            
         // Gain muscle exp with random variation
         const exp = 10 + (weight * intensity) + (Math.random() * 5);
         this.addMuscleExp(exp);
         
-        // Injury only when lifting near max weights (95%+) with risk enabled
+        let message = `${this.character.name} gained muscle experience lifting ${weight}kg`;
+        
+        // Injury chance only when lifting >95% max
         if (weight >= injuryThreshold && extension_settings.bodybuilding_system?.riskOfInjury) {
             if (Math.random() < 0.15) {
                 this.state.injured = true;
-                this.state.injuryTurns = 3; // Turn-based recovery
+                this.state.injuryTurns = 3;
                 this.saveState();
-                return `${this.character.name} was injured while lifting ${weight}kg!`;
+                return `${this.character.name} suffered an injury lifting ${weight}kg!`;
+            }
+            else {
+                message += " (close call!)";
             }
         }
         
         this.saveState();
-        return `${this.character.name} lifted ${weight}kg and gained muscle experience`;
+        return message;
     }
     
     processInjury() {
@@ -222,11 +242,11 @@ export class BodybuildingManager {
             this.state.injured = false;
             this.state.injuryTurns = 0;
             this.saveState();
-            return `${this.character.name} has recovered from injury`;
+            return `${this.character.name}'s injury has healed`;
         }
         
         this.saveState();
-        return `${this.character.name} needs to rest for ${this.state.injuryTurns} more turns`;
+        return `${this.character.name} must rest for ${this.state.injuryTurns} more turns to recover`;
     }
     
     addMuscleExp(amount) {
