@@ -12,7 +12,7 @@ function getCurrentCharacter() {
 }
 
 function registerBodybuildingCommand(panel) {
-    registerSlashCommand('body', async () => {
+    registerSlashCommand('muscle', async () => {
         const character = getCurrentCharacter();
         if (!character) {
             toastr.info("Please select a character first");
@@ -20,7 +20,7 @@ function registerBodybuildingCommand(panel) {
         }
         panel.toggle();
     }, [], 'Toggle bodybuilding system panel', true, true);
-    console.log("[BodybuildingSystem] Slash command '/body' registered successfully");
+    console.log("[BodybuildingSystem] Slash command '/muscle' registered successfully");
 }
 
 async function initializeExtension() {
