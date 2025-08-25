@@ -160,7 +160,7 @@ export class BodybuildingManager {
         // Only show message if stamina actually increased
         if (this.state.currentStamina != oldValue) {
             this.saveState();
-            return `${this.character.name} rested and recovered ${recovery.toFixed(1)} stamina`;
+            return `[Bodybuilding System] ${this.character.name} rested and recovered ${recovery.toFixed(1)} stamina`;
         }
         
         return null;
@@ -169,7 +169,7 @@ export class BodybuildingManager {
     processCardio() {
         // Allow cardio while injured but limit effectiveness
         if (this.state.injured) {
-            return `${this.character.name} performs light cardio while recovering`;
+            return `[Bodybuilding System] ${this.character.name} performs light cardio while recovering`;
         }
 
         const cost = 20;
@@ -177,19 +177,19 @@ export class BodybuildingManager {
         if (this.state.currentStamina < cost) {
             this.state.currentStamina = 0;
             this.saveState();
-            return `${this.character.name} is too exhausted for cardio!`;
+            return `[Bodybuilding System] ${this.character.name} is too exhausted for cardio!`;
         }
         
         this.state.currentStamina = Math.max(0, this.state.currentStamina - cost);
         this.addStaminaExp(0.8);
         
         this.saveState();
-        return `${this.character.name} gained stamina experience from cardio`;
+        return `[Bodybuilding System] ${this.character.name} gained stamina experience from cardio`;
     }
     
     processTraining() {
         if (this.state.injured) {
-            return `${this.character.name} can't train while injured!`;
+            return `[Bodybuilding System] ${this.character.name} can't train while injured!`;
         }
 
         const maxLift = this.getMaxLift();
@@ -197,7 +197,7 @@ export class BodybuildingManager {
         const injuryThreshold = maxLift * 0.95; 
         
         if (weight > maxLift) {
-            return `${this.character.name} can't lift ${weight.toFixed(1)}kg (max: ${maxLift.toFixed(1)}kg)`;
+            return `[Bodybuilding System] ${this.character.name} can't lift ${weight.toFixed(1)}kg (max: ${maxLift.toFixed(1)}kg)`;
         }
         
         const intensity = weight / maxLift;
@@ -207,7 +207,7 @@ export class BodybuildingManager {
         if (this.state.currentStamina < staminaCost) {
             this.state.currentStamina = 0;
             this.saveState();
-            return `${this.character.name} is too exhausted to train!`;
+            return `[Bodybuilding System] ${this.character.name} is too exhausted to train!`;
         }
         
         this.state.currentStamina = Math.max(0, this.state.currentStamina - staminaCost);
@@ -216,7 +216,7 @@ export class BodybuildingManager {
         const exp = 10 + (weight * intensity) + (Math.random() * 5);
         this.addMuscleExp(exp);
         
-        let message = `${this.character.name} gained muscle experience lifting ${weight}kg`;
+        let message = `[Bodybuilding System] ${this.character.name} lifted lifting ${weight}kg and gained muscle experience.`;
         
         // Injury chance only when lifting >95% max
         if (weight >= injuryThreshold && extension_settings.bodybuilding_system?.riskOfInjury) {
@@ -224,7 +224,7 @@ export class BodybuildingManager {
                 this.state.injured = true;
                 this.state.injuryTurns = 3;
                 this.saveState();
-                return `${this.character.name} suffered an injury lifting ${weight}kg!`;
+                return `[Bodybuilding System] ${this.character.name} suffered an injury lifting ${weight}kg!`;
             }
             else {
                 message += " (close call!)";
@@ -242,11 +242,11 @@ export class BodybuildingManager {
             this.state.injured = false;
             this.state.injuryTurns = 0;
             this.saveState();
-            return `${this.character.name}'s injury has healed`;
+            return `[Bodybuilding System] ${this.character.name}'s injury has healed`;
         }
         
         this.saveState();
-        return `${this.character.name} must rest for ${this.state.injuryTurns} more turns to recover`;
+        return `[Bodybuilding System] ${this.character.name} must rest for ${this.state.injuryTurns} more turns to recover`;
     }
     
     addMuscleExp(amount) {
@@ -276,7 +276,7 @@ export class BodybuildingManager {
         if (!this.activities.includes(activity)) return "Invalid activity";
         this.state.activity = activity;
         this.saveState();
-        return `Activity set to ${activity}`;
+        return `[Bodybuilding System] Activity set to ${activity}`;
     }
     
     setWorkoutWeight(weight) {
@@ -285,6 +285,6 @@ export class BodybuildingManager {
         
         this.state.workoutWeight = weight;
         this.saveState();
-        return `Workout weight set to ${weight}kg`;
+        return `[Bodybuilding System] Workout weight set to ${weight}kg`;
     }
 }
